@@ -17,7 +17,7 @@ export default function WhoAmI({ onPick, onBack }) {
           </motion.button>
         ))}
       </div>
-      {onBack && <button type="button" className="link" onClick={onBack}>Cambiar de familia</button>}
+      {onBack && <button type="button" className="link" onClick={onBack}>Usar otra familia</button>}
     </div>
   );
 }

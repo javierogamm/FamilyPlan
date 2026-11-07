@@ -14,7 +14,7 @@ import ComprasView from './ComprasView';
 import ShopSheet from './ShopSheet';
 import SeriesSheet from './SeriesSheet';
 import SeriesList from './SeriesList';
-import WhoSheet from './WhoSheet';
+import AccountSheet from './AccountSheet';
 import MealSheet from './MealSheet';
 import AddSheet from './AddSheet';
 import Swipe from './Swipe';
@@ -34,7 +34,7 @@ function persist(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-export default function Shell({ code, me, onChangeMe, onLogout }) {
+export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, onForget, onLogout }) {
   const [today, setToday] = useState(todayISO);
   const [toast, setToast] = useState(null);
   const showToast = useCallback((t) => setToast({ ...t, n: Date.now() }), []);
@@ -168,7 +168,7 @@ export default function Shell({ code, me, onChangeMe, onLogout }) {
             )}
             {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
-              <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={onLogout} />
+              <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={() => open({ kind: 'who' })} />
             )}
           </>
         )}
@@ -205,7 +205,7 @@ export default function Shell({ code, me, onChangeMe, onLogout }) {
       </AnimatePresence>
 
       {sheet?.kind === 'meal' && <MealSheet key={sheet.n} open={sheet.open} date={sheet.date} slotId={sheet.slotId} data={data} save={save} remove={removeWithUndo} onClose={closeSheet} />}
-      {sheet?.kind === 'who' && <WhoSheet key={sheet.n} open={sheet.open} me={me} onPick={onChangeMe} onClose={closeSheet} />}
+      {sheet?.kind === 'who' && <AccountSheet key={sheet.n} open={sheet.open} me={me} code={code} families={families} onPickMe={onPickMe} onSwitch={onSwitch} onAdd={onAdd} onForget={onForget} onClose={closeSheet} />}
       {sheet?.kind === 'series' && <SeriesList key={sheet.n} open={sheet.open} today={today} events={data.events} onNew={() => openSeriesForm()} onEdit={(g) => openSeriesForm(g)} onDelete={deleteSeries} onClose={closeSheet} />}
       {sheet?.kind === 'seriesForm' && <SeriesSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} saveMany={saveMany} removeSeries={removeSeries} onClose={closeSheet} />}
       {sheet?.kind === 'shop' && <ShopSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} store={sheet.store} prefill={sheet.prefill} save={save} onDelete={(row) => removeWithUndo('shopping', row)} onClose={closeSheet} />}

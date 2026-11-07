@@ -5,7 +5,7 @@ import { Segmented } from './ui';
 
 const MODES = [{ value: 'login', label: 'Entrar' }, { value: 'create', label: 'Crear familia' }];
 
-export default function Login({ onEnter, error: initialError }) {
+export default function Login({ onEnter, onCancel, error: initialError }) {
   const [mode, setMode] = useState('login');
   const [code, setCode] = useState('');
   const [error, setError] = useState(initialError);
@@ -40,6 +40,7 @@ export default function Login({ onEnter, error: initialError }) {
         <input id="code" className="field" value={code} onChange={(e) => setCode(e.target.value)} placeholder="ej. casa-garcia-2026" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={64} />
         {error && <div className="form-error">{error}</div>}
         <button className="btn primary" disabled={!ok || busy} type="submit">{busy ? 'Un momento…' : create ? 'Crear familia' : 'Entrar'}</button>
+        {onCancel && <button type="button" className="link" onClick={onCancel}>← Volver a mi familia</button>}
         <small>
           {create
             ? 'Elige un código que solo conozcáis vosotros (mínimo 4 caracteres). No distingue mayúsculas de minúsculas.'
