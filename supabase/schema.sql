@@ -31,6 +31,7 @@ create table if not exists absences (
   person text not null check (person in ('papa','mama')),
   start_date date not null,
   end_date date not null,
+  start_time time,
   kind text not null default 'otro' check (kind in ('viaje','trabajo','otro')),
   note text not null default '',
   check (end_date >= start_date)
@@ -77,6 +78,9 @@ create table if not exists dishes (
 create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
+
+-- Migración 4 (hora de inicio de viajes / trabajo):
+alter table absences add column if not exists start_time time;
 
 -- Migración 3 (extraescolares recurrentes, lugar, icono, viaje/trabajo):
 alter table events add column if not exists series_id uuid;

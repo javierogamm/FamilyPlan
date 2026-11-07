@@ -11,7 +11,7 @@ const SCHEMA = {
   },
   absences: {
     required: ['id', 'person', 'start_date', 'end_date'],
-    fields: { id: 'uuid', person: ['papa', 'mama'], start_date: 'date', end_date: 'date', kind: ['viaje', 'trabajo', 'otro'], note: 's120' },
+    fields: { id: 'uuid', person: ['papa', 'mama'], start_date: 'date', end_date: 'date', start_time: 'time', kind: ['viaje', 'trabajo', 'otro'], note: 's120' },
   },
   events: {
     required: ['id', 'date', 'title', 'kind'],

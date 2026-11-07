@@ -40,6 +40,7 @@ export default function AddSheet({ open, date, edit, preset, me, save, onDelete,
   const [parent, setParent] = useState(edit?.person ?? (me === 'mama' ? 'mama' : 'papa'));
   const [absKind, setAbsKind] = useState(edit?.kind ?? preset?.kind ?? 'viaje');
   const [note, setNote] = useState(edit?.note ?? '');
+  const [startTime, setStartTime] = useState(hhmm(edit?.start_time));
   const abs = type === 'ausencia';
   const extra = type === 'extraescolar';
   const outside = !extra || location === 'outside';
@@ -62,7 +63,7 @@ export default function AddSheet({ open, date, edit, preset, me, save, onDelete,
   const submit = () => {
     if (!valid) return;
     buzz(15);
-    if (abs) save('absences', { id: edit?.id ?? uid(), person: parent, start_date: from, end_date: to < from ? from : to, kind: absKind, note: note.trim() });
+    if (abs) save('absences', { id: edit?.id ?? uid(), person: parent, start_date: from, end_date: to < from ? from : to, kind: absKind, start_time: startTime || null, note: note.trim() });
     else {
       const nt = outside && needsTransport;
       save('events', {
@@ -99,6 +100,7 @@ export default function AddSheet({ open, date, edit, preset, me, save, onDelete,
             <label><h3 className="label">Desde</h3><input type="date" className="field" value={from} onChange={(e) => { setFrom(e.target.value); if (to < e.target.value) setTo(e.target.value); }} /></label>
             <label><h3 className="label">Hasta</h3><input type="date" className="field" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
           </div>
+          <label><h3 className="label">Hora de salida (el primer día, opcional)</h3><input type="time" className="field" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></label>
           <h3 className="label">Detalle (opcional)</h3>
           <input className="field" value={note} onChange={(e) => setNote(e.target.value)} placeholder={absKind === 'viaje' ? 'Ej.: Madrid, congreso' : absKind === 'trabajo' ? 'Ej.: turno de tarde' : 'Ej.: médico'} maxLength={120} />
         </>

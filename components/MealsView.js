@@ -2,8 +2,8 @@
 import { motion } from 'framer-motion';
 import { COOK_WHEN, COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
 import { longDate } from '@/lib/dates';
-import { absentOn, buzz, eventsOn, hhmm, mealAt } from '@/lib/helpers';
-import { personIcon } from '@/lib/icons';
+import { absLabel, awayList, buzz, eventsOn, hhmm, mealAt } from '@/lib/helpers';
+import { absenceIcon, personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 import { Segmented } from './ui';
 
@@ -77,14 +77,14 @@ function MealCard({ date, slot, meal, openMeal, save }) {
 }
 
 export default function MealsView({ date, data, openMeal, save }) {
-  const away = absentOn(data.absences, date);
+  const away = awayList(data.absences, date);
   const evs = eventsOn(data.events, date);
   return (
     <>
       <h2 className="day-title">{longDate(date)}</h2>
       {(away.length > 0 || evs.length > 0) && (
         <div className="banner-row">
-          {away.map((p) => <span key={p} className={`away-chip aw-${p}`}>{person(p).emoji} {person(p).label} fuera</span>)}
+          {away.map((a) => <span key={a.id} className={`away-chip aw-${a.person}`}><Pic icon={absenceIcon(a)} size={32} animate={false} />{person(a.person).label} {absLabel(a, date)}</span>)}
           {evs.map((e) => <span key={e.id} className="away-chip aw-ev">{e.emoji} {hhmm(e.time)} {e.title}</span>)}
         </div>
       )}

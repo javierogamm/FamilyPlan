@@ -21,9 +21,9 @@ export default function AlertsView({ alerts: all, me, onGo, onDismiss, notif, on
       <p className="muted hint">Desliza a la izquierda para descartar un aviso</p>
       <AnimatePresence initial={false}>
         {alerts.map((a) => (
-          <SwipeRow key={a.id} className={`alert lv-${a.level}`} onClick={() => onGo(a)} onDelete={() => onDismiss(a.id)}>
+          <SwipeRow key={a.id} className={`alert lv-${a.level}${a.special ? ' special' : ''}`} onClick={() => onGo(a)} onDelete={() => onDismiss(a.id)}>
             <span className="al-ico">{a.icon}</span>
-            <span className="al-main"><small>{LEVEL[a.level]}</small><b>{a.title}</b><span>{a.text}</span></span>
+            <span className="al-main"><small>{a.special ? 'Conflicto' : LEVEL[a.level]}</small><b>{a.title}</b><span>{a.text}</span></span>
             <span className="al-go">›</span>
           </SwipeRow>
         ))}
