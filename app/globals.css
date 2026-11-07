@@ -222,3 +222,81 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .form-error { color: #e5484d; font-weight: 700; font-size: 14px; }
 
 @media (prefers-reduced-motion: reduce) { .blobs i { animation: none; } * { scroll-behavior: auto; } }
+
+/* ---------- Iconos ilustrados ---------- */
+.pic { position: relative; display: inline-block; flex: none; vertical-align: middle; }
+.pic img { width: 100%; height: 100%; display: block; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+.pic.small { border-radius: 50%; background: #fffaf2; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 14%, transparent); }
+.pic.small img { object-fit: cover; border-radius: 50%; }
+.pic:not(.small) { background: #fffaf2; border-radius: 22%; padding: 3%; box-shadow: 0 2px 8px rgba(120, 70, 20, .12); }
+.pic.ring.small { box-shadow: 0 0 0 2.5px var(--card); }
+.pic-badge { position: absolute; right: -4px; bottom: -3px; font-style: normal; line-height: 1; padding: 2px 3px; border-radius: 50%; background: var(--card); box-shadow: var(--shadow-sm); }
+.pic-stack { display: inline-flex; flex: none; } .pic.second { margin-left: -16px; }
+.row-pic { margin-left: -2px; }
+.buy-wrap { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.tr-tag { display: inline-flex; align-items: center; font-size: 13px; font-weight: 800; color: #e5484d; } .tr-tag.set { color: inherit; }
+
+.assign-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; padding: 0 12px 12px; }
+.assign { display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 104px; border-radius: 22px; background: var(--soft); border: 2px dashed var(--line); text-align: left; transition: background .2s, border-color .2s; }
+.assign.set { border-style: solid; border-color: transparent; }
+.as-pic { width: 84px; height: 84px; display: grid; place-items: center; flex: none; }
+.as-empty { width: 64px; height: 64px; border-radius: 50%; border: 2px dashed var(--primary); color: var(--primary); display: grid; place-items: center; font-size: 28px; }
+.as-emoji { font-size: 48px; }
+.as-text { display: grid; gap: 1px; min-width: 0; } .as-text small { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); } .as-text b { font-size: 18px; }
+
+.chip.on { background: var(--primary); color: #fff; }
+.chips.no-top { margin-top: 0; }
+.people.kids { grid-template-columns: repeat(2, 1fr); }
+.pp.kid-on { border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--card)); }
+.pp { min-height: 96px; justify-content: center; }
+.tr-btn { width: 56px; height: 56px; border-radius: 50%; flex: none; display: grid; place-items: center; }
+.tr-empty { width: 52px; height: 52px; border-radius: 50%; border: 2px dashed var(--primary); color: var(--primary); display: grid; place-items: center; font-size: 22px; position: relative; }
+.tr-empty b { position: absolute; right: -2px; top: -4px; font-size: 14px; background: var(--primary); color: #fff; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+.meal-row { min-height: 60px; }
+.ag-item { min-height: 66px; }
+
+/* ---------- Tablet / PC ---------- */
+@media (min-width: 760px) {
+  .app { max-width: 880px; }
+  .main { padding: 8px 24px 0; }
+  .weekbar { padding-left: 24px; padding-right: 24px; }
+  .stack, .agenda, .shop-groups { grid-template-columns: 1fr 1fr; align-items: start; }
+  .cards { grid-template-columns: 1fr 1fr; align-items: start; }
+  .tabbar { width: 480px; }
+  .fab { right: max(24px, calc(50% - 416px)); }
+  .toast { left: 50%; }
+  .sheet { top: 50%; bottom: auto; translate: -50% -50%; width: 640px; max-height: 88dvh; border-radius: 28px; }
+  .dish-grid { grid-template-columns: repeat(4, 1fr); }
+  .mc-dish { font-size: 28px; }
+}
+@media (min-width: 1100px) {
+  .app { max-width: 1320px; padding-left: 128px; padding-bottom: 48px; }
+  .stack, .agenda { grid-template-columns: repeat(3, 1fr); }
+  .weekbar { padding-top: 26px; }
+  .wb-top h1 { font-size: 34px; }
+  .days { max-width: 720px; }
+  .day { min-height: 76px; } .day .dn { font-size: 24px; }
+  .tabbar { left: max(16px, calc(50% - 644px)); top: 24px; bottom: auto; transform: none; width: 92px; height: auto; grid-template-columns: 1fr; gap: 6px; padding: 8px; border-radius: 30px; }
+  .tabbar button { min-height: 80px; }
+  .fab { right: max(32px, calc(50% - 628px)); bottom: 32px; }
+  .toast { bottom: 28px; }
+  .summary { max-width: 760px; }
+  .meal-card { border-radius: 30px; } .mc-emoji { font-size: 84px; }
+}
+
+/* ---------- Comidas hechas ---------- */
+.toggle-row { display: grid; border-top: 1px solid var(--line); }
+.toggle-row.two { grid-template-columns: 1fr 1fr; }
+.toggle-row .buy-toggle { border-top: 0; border-right: 1px solid var(--line); font-size: 14.5px; padding: 0 8px; }
+.done-toggle { min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14.5px; padding: 0 8px; background: color-mix(in srgb, var(--blue) 10%, var(--card)); transition: background .25s; }
+.done-toggle.on { background: color-mix(in srgb, var(--green) 24%, var(--card)); color: var(--green); }
+.done-tag { margin-left: 8px; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--green); color: #fff; letter-spacing: .04em; }
+.meal-card.done .mc-emoji { filter: grayscale(.5) drop-shadow(0 6px 8px rgba(0, 0, 0, .1)); opacity: .75; }
+.meal-card.done .mc-dish { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: color-mix(in srgb, var(--green) 70%, transparent); color: var(--muted); }
+.meal-row.done .mr-dish { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--green); }
+.meal-row.done .mr-emoji { opacity: .6; filter: grayscale(.4); }
+.done-chip { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 10px; background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); white-space: nowrap; }
+.t-sun { background: linear-gradient(90deg, #ffd36b, var(--sun)); }
+.summary { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.as-text small { letter-spacing: .04em; }
+.assign { padding: 8px 10px; gap: 8px; }

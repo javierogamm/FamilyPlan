@@ -17,6 +17,7 @@ create table if not exists meals (
   cook text check (cook in ('papa','mama','otros')),
   shopper text check (shopper in ('papa','mama','otros')),
   shopping_ok boolean not null default false,
+  done boolean not null default false,
   note text not null default '',
   updated_at timestamptz not null default now(),
   unique (household_id, date, slot)
@@ -41,7 +42,10 @@ create table if not exists events (
   kind text not null default 'evento' check (kind in ('evento','extraescolar')),
   who text not null default '',
   repeat text not null default 'none' check (repeat in ('none','weekly')),
-  emoji text not null default '📌'
+  emoji text not null default '📌',
+  needs_transport boolean not null default false,
+  transport text check (transport in ('papa','mama')),
+  activity text not null default ''
 );
 
 create table if not exists dishes (
@@ -56,10 +60,17 @@ create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
 
--- RLS activado SIN políticas: el acceso público directo queda denegado.
--- La app accede solo desde el servidor (rutas /api) con la service role key.
-alter table households enable row level security;
-alter table meals enable row level security;
-alter table absences enable row level security;
-alter table events enable row level security;
-alter table dishes enable row level security;
+-- Migración para bases ya creadas (iconos, transporte y comidas hechas):
+alter table meals add column if not exists done boolean not null default false;
+alter table events add column if not exists needs_transport boolean not null default false;
+alter table events add column if not exists transport text check (transport in ('papa','mama'));
+alter table events add column if not exists activity text not null default '';
+
+-- Sin RLS (el acceso es solo desde el servidor con la service role key).
+alter table households disable row level security;
+alter table meals      disable row level security;
+alter table absences   disable row level security;
+alter table events     disable row level security;
+alter table dishes     disable row level security;
+-- Opcional: impedir acceso por la API pública de Supabase
+-- revoke all on households, meals, absences, events, dishes from anon, authenticated;

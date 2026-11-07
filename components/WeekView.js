@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { NO_SHOP, PARENTS, SLOTS } from '@/lib/constants';
 import { dayNum, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
 import { absentOn, eventsOn, hhmm, mealAt } from '@/lib/helpers';
-import { Avatar } from './ui';
+import { personIcon, eventIcons } from '@/lib/icons';
+import { Pic, PicStack } from './Pic';
 
 const list = { show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 320, damping: 26 } } };
@@ -20,18 +21,20 @@ function Bar({ label, value, total, tone }) {
 
 export default function WeekView({ monday, today, data, openMeal, openEvent, goDay }) {
   const days = weekDays(monday);
-  let planned = 0, needBuy = 0, bought = 0;
+  let planned = 0, needBuy = 0, bought = 0, done = 0;
   for (const d of days) for (const s of SLOTS) {
     const m = mealAt(data.meals, d, s.id);
     if (m?.dish) {
       planned++;
-      if (!NO_SHOP.has(m.dish)) { needBuy++; if (m.shopping_ok) bought++; }
+      if (m.done) done++;
+      else if (!NO_SHOP.has(m.dish)) { needBuy++; if (m.shopping_ok) bought++; }
     }
   }
   return (
     <>
       <div className="summary">
         <Bar label="🍽️ Menú planificado" value={planned} total={days.length * SLOTS.length} tone="t-coral" />
+        <Bar label="🍽️ Comidas hechas" value={done} total={planned} tone="t-sun" />
         <Bar label="🛒 Compra lista" value={bought} total={needBuy} tone="t-green" />
       </div>
       <motion.div className="stack" variants={list} initial="hidden" animate="show">
@@ -51,14 +54,20 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
               </button>
               {SLOTS.map((s) => {
                 const m = mealAt(data.meals, d, s.id);
-                const buy = m?.dish && !NO_SHOP.has(m.dish) ? (m.shopping_ok ? 'ok' : 'pending') : null;
+                const buy = m?.dish && !m.done && !NO_SHOP.has(m.dish) ? (m.shopping_ok ? 'ok' : 'pending') : null;
                 return (
-                  <button key={s.id} type="button" className={`meal-row${m?.dish ? '' : ' empty'}`} onClick={() => openMeal(d, s.id)}>
+                  <button key={s.id} type="button" className={`meal-row${m?.dish ? '' : ' empty'}${m?.done ? ' done' : ''}`} onClick={() => openMeal(d, s.id)}>
                     <span className="slot-ico" title={s.label}>{s.icon}</span>
                     <span className="mr-emoji">{m?.dish ? m.emoji : '＋'}</span>
                     <span className="mr-dish">{m?.dish || 'Sin planificar'}</span>
-                    {m?.cook && <Avatar id={m.cook} size={24} />}
-                    {buy && <span className={`buy-dot ${buy}`} title={buy === 'ok' ? 'Hay compra' : 'Falta compra'}>{buy === 'ok' ? '✓' : '🛒'}</span>}
+                    {m?.done && <span className="done-chip">✓ Hecha</span>}
+                    {m?.cook && <Pic icon={personIcon(m.cook === 'otros' ? null : m.cook, 'cocinar')} size={40} animate={false} className="row-pic" />}
+                    {buy && (
+                      <span className={`buy-wrap ${buy}`} title={buy === 'ok' ? 'Hay compra' : 'Falta compra'}>
+                        {m.shopper && m.shopper !== 'otros' && <Pic icon={personIcon(m.shopper, 'comprar')} size={40} animate={false} className="row-pic" />}
+                        <span className={`buy-dot ${buy}`}>{buy === 'ok' ? '✓' : '🛒'}</span>
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -66,8 +75,9 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
                 <div className="ev-list">
                   {evs.map((e) => (
                     <button key={e.id} type="button" className={`ev-chip k-${e.kind}`} onClick={() => openEvent(e, d)}>
-                      <span>{e.emoji}</span>
+                      {eventIcons(e).length ? <PicStack icons={eventIcons(e)} size={30} /> : <span>{e.emoji}</span>}
                       <b>{hhmm(e.time)}</b>
+                      {e.needs_transport && <span className={`tr-tag${e.transport ? ' set' : ''}`}>{e.transport ? <Pic icon={personIcon(e.transport, 'transporte')} size={30} animate={false} /> : '🛵?'}</span>}
                       <span className="ev-title">{e.title}</span>
                       {e.who && <em>{e.who}</em>}
                     </button>
