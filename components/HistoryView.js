@@ -70,7 +70,8 @@ export default function HistoryView({ monday, today, data, openMeal }) {
         </div>
       ) : (
         <>
-          <p className="muted hint">Del {from.slice(8)}/{from.slice(5, 7)} al {to.slice(8)}/{to.slice(5, 7)} · {counts.total} comidas registradas</p>
+          <p className="muted hint">Del {from.slice(8)}/{from.slice(5, 7)} al {to.slice(8)}/{to.slice(5, 7)} · {counts.total} comidas hechas</p>
+          {counts.total === 0 && <p className="muted hint">Solo cuentan las comidas marcadas como «hechas». Márcalas desde Comidas o desde la agenda.</p>}
           <div className="rank-grid">
             <Ranking title="🥣 Primeros" rows={counts.primeros} total={counts.total} />
             <Ranking title="🍗 Segundos" rows={counts.segundos} total={counts.total} />
