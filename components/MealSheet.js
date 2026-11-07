@@ -16,7 +16,7 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
   const [emoji, setEmoji] = useState(DISH_EMOJIS[0]);
 
   const patch = (p) =>
-    save('meals', { date, slot: slotId, dish: '', emoji: '🍽️', cook: null, shopper: null, shopping_ok: false, note: '', ...meal, ...p });
+    save('meals', { date, slot: slotId, dish: '', emoji: '🍽️', cook: null, shopper: null, shopping_ok: false, done: false, note: '', ...meal, ...p });
 
   const options = [...PRESET_DISHES];
   for (const d of data.dishes) if (!options.some((o) => o.name.toLowerCase() === d.name.toLowerCase())) options.push({ ...d, custom: true });
@@ -55,12 +55,13 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
     >
       {hasDish && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <Switch checked={!!meal.done} onChange={(v) => patch({ done: v })} label="Ya está hecha" hint="Para platos preparados con antelación" />
           <h3 className="label">👩‍🍳 ¿Quién cocina?</h3>
-          <PersonPick value={meal.cook} onChange={(v) => patch({ cook: v })} absent={absent} />
+          <PersonPick action="cocinar" value={meal.cook} onChange={(v) => patch({ cook: v })} absent={absent} />
           {needsBuy && (
             <>
               <h3 className="label">🛒 ¿Quién compra?</h3>
-              <PersonPick value={meal.shopper} onChange={(v) => patch({ shopper: v })} absent={absent} />
+              <PersonPick action="comprar" value={meal.shopper} onChange={(v) => patch({ shopper: v })} absent={absent} />
               <Switch checked={!!meal.shopping_ok} onChange={(v) => patch({ shopping_ok: v })} label="Ya hay compra para este plato" hint="Márcalo cuando esté comprado" />
             </>
           )}

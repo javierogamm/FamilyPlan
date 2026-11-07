@@ -20,7 +20,7 @@ export default function SwipeRow({ onDelete, onClick, children, className = '' }
             onDelete();
           }
         }}
-        onTap={onClick}
+        onTap={(e) => { if (!e.target?.closest?.('button')) onClick?.(); }}
         whileTap={{ scale: 0.985 }}
       >
         {children}

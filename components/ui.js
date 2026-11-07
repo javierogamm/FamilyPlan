@@ -2,6 +2,8 @@
 import { motion } from 'framer-motion';
 import { PEOPLE, person } from '@/lib/constants';
 import { buzz } from '@/lib/helpers';
+import { personIcon } from '@/lib/icons';
+import { Pic } from './Pic';
 
 export function Avatar({ id, size = 28 }) {
   const p = person(id);
@@ -40,16 +42,17 @@ export function Switch({ checked, onChange, label, hint }) {
   );
 }
 
-/** Selector de persona (tocar de nuevo deselecciona). `absent` marca a quien no está ese día. */
-export function PersonPick({ value, onChange, absent = [] }) {
+/** Quién hace una tarea: Viero / Sonia con su icono de la acción (tocar de nuevo deselecciona). */
+export function PersonPick({ value, onChange, absent = [], action, options = PEOPLE }) {
   return (
-    <div className="people">
-      {PEOPLE.map((p) => {
+    <div className="people" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
+      {options.map((p) => {
         const on = value === p.id;
         const away = absent.includes(p.id);
+        const icon = personIcon(p.id, action);
         return (
           <button key={p.id} type="button" className={`pp pp-${p.id}${on ? ' on' : ''}${away ? ' away' : ''}`} onClick={() => { buzz(); onChange(on ? null : p.id); }}>
-            <span className="pp-emoji">{p.emoji}</span>
+            {icon ? <Pic icon={icon} size={on ? 76 : 68} animate={false} /> : <span className="pp-emoji">{p.emoji}</span>}
             <span>{p.label}</span>
             {away && <i className="pp-away">fuera</i>}
           </button>

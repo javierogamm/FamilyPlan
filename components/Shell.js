@@ -113,6 +113,19 @@ export default function Shell({ code, onLogout }) {
   };
 
   const swipeWeek = (d) => shiftWeek(d);
+
+  // Teclado (PC): ← → cambian de día (Comidas) o de semana (resto).
+  const keyNav = useRef();
+  keyNav.current = (delta) => (tab === 'comidas' ? shiftDay(delta) : shiftWeek(delta));
+  useEffect(() => {
+    const onKey = (e) => {
+      if (sheet?.open || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      if (e.key === 'ArrowRight') keyNav.current(1);
+      else if (e.key === 'ArrowLeft') keyNav.current(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [sheet?.open]);
   const urgent = alerts.filter((a) => a.level !== 'info').length;
 
   return (
@@ -137,7 +150,7 @@ export default function Shell({ code, onLogout }) {
               </Swipe>
             )}
             {tab === 'agenda' && (
-              <AgendaView monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={(d) => openAdd(d)} removeWithUndo={removeWithUndo} />
+              <AgendaView save={save} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={(d) => openAdd(d)} removeWithUndo={removeWithUndo} />
             )}
             {tab === 'avisos' && (
               <AlertsView alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={onLogout} />
@@ -177,7 +190,7 @@ export default function Shell({ code, onLogout }) {
       </AnimatePresence>
 
       {sheet?.kind === 'meal' && <MealSheet key={sheet.n} open={sheet.open} date={sheet.date} slotId={sheet.slotId} data={data} save={save} remove={removeWithUndo} onClose={closeSheet} />}
-      {sheet?.kind === 'add' && <AddSheet key={sheet.n} open={sheet.open} date={sheet.date} edit={sheet.edit} data={data} save={save} onDelete={(row) => removeWithUndo('person' in row ? 'absences' : 'events', row)} onClose={closeSheet} />}
+      {sheet?.kind === 'add' && <AddSheet key={sheet.n} open={sheet.open} date={sheet.date} edit={sheet.edit} save={save} onDelete={(row) => removeWithUndo('person' in row ? 'absences' : 'events', row)} onClose={closeSheet} />}
     </div>
   );
 }
