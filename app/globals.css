@@ -352,3 +352,13 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .btn.sm { min-height: 40px; font-size: 14px; }
 .tr-empty.small { width: 44px; height: 44px; font-size: 18px; }
 @media (max-width: 430px) { .wb-top h1 { font-size: 22px; white-space: nowrap; } .wb-actions { gap: 6px; } .wb-actions .round { width: 40px; height: 40px; } }
+
+/* ---------- Familias guardadas ---------- */
+.fam-list { display: grid; gap: 8px; margin-bottom: 12px; }
+.fam-item { display: flex; align-items: center; border-radius: 18px; background: var(--card); box-shadow: var(--shadow-sm); border: 2px solid transparent; }
+.fam-item.on { border-color: var(--primary); }
+.fam-main { flex: 1; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px; text-align: left; min-width: 0; }
+.fam-ico { font-size: 28px; } .fam-name { display: grid; min-width: 0; } .fam-name b { overflow: hidden; text-overflow: ellipsis; } .fam-name small { color: var(--muted); }
+.fam-check { margin-left: auto; color: var(--primary); font-weight: 900; font-size: 20px; }
+.fam-forget { width: 48px; height: 60px; color: var(--muted); font-size: 16px; }
+.btn.wide { width: 100%; }
