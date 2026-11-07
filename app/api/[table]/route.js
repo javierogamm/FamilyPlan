@@ -7,7 +7,7 @@ const SCHEMA = {
   meals: {
     conflict: 'household_id,date,slot',
     required: ['date', 'slot'],
-    fields: { date: 'date', slot: ['comida', 'cena'], dish: 's60', emoji: 's8', dish2: 's60', emoji2: 's8', cook: [...PEOPLE, null], shopper: [...PEOPLE, null], shopping_ok: 'bool', done: 'bool', needs_buy: 'bool', cook_when: ['same', 'eve', 'weekend'], note: 's200' },
+    fields: { date: 'date', slot: ['comida', 'cena'], dish: 's60', emoji: 's8', dish2: 's60', emoji2: 's8', cook: [...PEOPLE, null], shopper: [...PEOPLE, null], shopping_ok: 'bool', done: 'bool', suggested: 'bool', suggested_by: ['papa', 'mama', null], needs_buy: 'bool', cook_when: ['same', 'eve', 'weekend'], note: 's200' },
   },
   absences: {
     required: ['id', 'person', 'start_date', 'end_date'],

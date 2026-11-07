@@ -20,6 +20,8 @@ create table if not exists meals (
   shopper text check (shopper in ('papa','mama','otros')),
   shopping_ok boolean not null default false,
   done boolean not null default false,
+  suggested boolean not null default false,
+  suggested_by text check (suggested_by in ('papa','mama')),
   needs_buy boolean not null default false,
   cook_when text not null default 'same' check (cook_when in ('same','eve','weekend')),
   note text not null default '',
@@ -81,6 +83,10 @@ create table if not exists dishes (
 create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
+
+-- Migración 6 (comida sugerida):
+alter table meals add column if not exists suggested boolean not null default false;
+alter table meals add column if not exists suggested_by text check (suggested_by in ('papa','mama'));
 
 -- Migración 5 (primero y segundo, platos propios por curso):
 alter table meals add column if not exists dish2 text not null default '';

@@ -162,11 +162,11 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
             )}
             {tab === 'comidas' && (
               <Swipe id={`d-${selected}`} dir={dir} onSwipe={shiftDay}>
-                <MealsView date={selected} data={data} openMeal={openMeal} save={save} />
+                <MealsView date={selected} data={data} me={me} openMeal={openMeal} save={save} remove={removeWithUndo} />
               </Swipe>
             )}
             {tab === 'agenda' && (
-              <AgendaView save={save} me={me} openMeal={openMeal} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
+              <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
             {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
@@ -206,7 +206,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
         )}
       </AnimatePresence>
 
-      {sheet?.kind === 'meal' && <MealSheet key={sheet.n} open={sheet.open} date={sheet.date} slotId={sheet.slotId} data={data} save={save} remove={removeWithUndo} onClose={closeSheet} />}
+      {sheet?.kind === 'meal' && <MealSheet key={sheet.n} open={sheet.open} date={sheet.date} slotId={sheet.slotId} me={me} data={data} save={save} remove={removeWithUndo} onClose={closeSheet} />}
       {sheet?.kind === 'who' && <AccountSheet key={sheet.n} open={sheet.open} me={me} code={code} families={families} onPickMe={onPickMe} onSwitch={onSwitch} onAdd={onAdd} onForget={onForget} onClose={closeSheet} />}
       {sheet?.kind === 'series' && <SeriesList key={sheet.n} open={sheet.open} today={today} events={data.events} onNew={() => openSeriesForm()} onEdit={(g) => openSeriesForm(g)} onDelete={deleteSeries} onClose={closeSheet} />}
       {sheet?.kind === 'seriesForm' && <SeriesSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} saveMany={saveMany} removeSeries={removeSeries} onClose={closeSheet} />}
