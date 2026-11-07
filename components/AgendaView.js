@@ -1,28 +1,18 @@
 'use client';
+import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { SLOTS, person } from '@/lib/constants';
-import { addDays, dayNum, fromISO, weekDays, weekdayName } from '@/lib/dates';
-import { absLabel, absenceAt, buzz, eventsOn, hhmm, isPlanned, mealAt, mealEmoji, mealName } from '@/lib/helpers';
+import { person } from '@/lib/constants';
+import { dayNum, weekDays, weekdayName } from '@/lib/dates';
+import { absLabel, absenceAt, buzz, eventsOn, hhmm, mealName } from '@/lib/helpers';
 import { absenceIcon, eventIcons, personIcon } from '@/lib/icons';
+import { agendaTasks } from '@/lib/tasks';
 import { Pic, PicStack } from './Pic';
 import SwipeRow from './SwipeRow';
 
 const CYCLE = [null, 'papa', 'mama'];
 
-/** Platos de la semana siguiente marcados para cocinar el fin de semana (sábado: todos; domingo: solo pendientes). */
-function weekendCooking(meals, d) {
-  const dow = fromISO(d).getDay();
-  if (dow !== 6 && dow !== 0) return [];
-  const mon = addDays(d, dow === 6 ? 2 : 1);
-  const list = [];
-  for (let i = 0; i < 5; i++) for (const s of SLOTS) {
-    const m = mealAt(meals, addDays(mon, i), s.id);
-    if (isPlanned(m) && m.cook_when === 'weekend' && (dow === 6 || !m.done)) list.push({ m, slot: s });
-  }
-  return list;
-}
-
-export default function AgendaView({ save, monday, today, selected, data, me, openMeal, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
+export default function AgendaView({ save, monday, today, selected, data, me, openMeal, openShop, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
+  const [mine, setMine] = useState(false);
   const cycleTransport = (e) => {
     buzz(12);
     save('events', { ...e, transport: CYCLE[(CYCLE.indexOf(e.transport ?? null) + 1) % CYCLE.length] });
@@ -30,6 +20,7 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
   return (
     <div className="agenda-wrap">
       <div className="quick-row">
+        <button type="button" className={`quick${mine ? ' on' : ''}`} onClick={() => setMine((v) => !v)}>👤 Solo lo mío</button>
         <button type="button" className="quick" onClick={() => openSeries()}>🎒 Extraescolares</button>
         <button type="button" className="quick" onClick={() => openAdd(selected, null, { type: 'ausencia', kind: 'viaje' })}>✈️ Me voy de viaje</button>
         <button type="button" className="quick" onClick={() => openAdd(selected, null, { type: 'ausencia', kind: 'trabajo' })}>💻 Estoy trabajando</button>
@@ -39,8 +30,8 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
         {weekDays(monday, 7).map((d) => {
           const evs = eventsOn(data.events, d);
           const abs = data.absences.filter((a) => a.start_date <= d && d <= a.end_date);
-          const cook = weekendCooking(data.meals, d);
-          const empty = !evs.length && !abs.length && !cook.length;
+          const tasks = agendaTasks(data, d, today).filter((t) => !mine || !t.person || t.person === me);
+          const empty = !evs.length && !abs.length && !tasks.length;
           return (
             <section key={d} className={`ag-day${d === today ? ' today' : ''}${d === selected ? ' sel' : ''}`}>
               <div className="ag-head">
@@ -49,19 +40,42 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                 <span className="grow" />
                 <button type="button" className="round sm" aria-label="Añadir" onClick={() => openAdd(d)}>＋</button>
               </div>
-              {cook.length > 0 && (
-                <div className="cook-block">
-                  <h4>🍳 Cocinar este finde <small>para la semana que viene</small></h4>
-                  {cook.map(({ m, slot }) => (
-                    <div key={m.date + m.slot} className={`cook-item${m.done ? ' is-done' : ''}${m.cook && m.cook === me ? ' mine' : ''}`}>
-                      <button type="button" className={`check${m.done ? ' on' : ''}`} aria-label={m.done ? 'Marcar pendiente' : 'Marcar hecha'} onClick={() => { buzz(18); save('meals', { ...m, done: !m.done }); }}>{m.done ? '✓' : ''}</button>
-                      <button type="button" className="ck-main" onClick={() => openMeal(m.date, m.slot)}>
-                        <span className="ag-ico">{mealEmoji(m)}</span>
-                        <span className="ag-main"><b>{mealName(m)}</b><small>{weekdayName(m.date)} · {slot.label.toLowerCase()}{m.cook === me ? ' · te toca a ti' : ''}</small></span>
-                        {m.cook ? <Pic icon={personIcon(m.cook === 'otros' ? null : m.cook, 'cocinar')} size={48} animate={false} /> : <span className="tr-empty small">🍳<b>?</b></span>}
-                      </button>
-                    </div>
-                  ))}
+              {tasks.length > 0 && (
+                <div className="task-list">
+                  {tasks.map((t) => {
+                    const icon = t.person && t.person !== 'otros' ? personIcon(t.person, t.type === 'cook' ? 'cocinar' : 'comprar') : null;
+                    const bad = t.person && t.person !== 'otros' && !t.done ? absenceAt(data.absences, t.person, d, null) : null;
+                    const open = () => (t.type === 'cook' ? openMeal(t.meal.date, t.meal.slot) : t.type === 'buy' ? openShop({ edit: t.task }) : openShop({ prefill: { items: mealName(t.meal), date: d } }));
+                    const toggle = () => {
+                      buzz(18);
+                      if (t.type === 'cook') save('meals', { ...t.meal, done: !t.meal.done });
+                      else if (t.type === 'buy') save('shopping', { ...t.task, done: !t.task.done });
+                      else save('meals', { ...t.meal, needs_buy: false });
+                    };
+                    const assign = () => {
+                      buzz(12);
+                      if (t.type === 'cook') save('meals', { ...t.meal, cook: CYCLE[(CYCLE.indexOf(t.meal.cook ?? null) + 1) % CYCLE.length] });
+                      else if (t.type === 'buy') save('shopping', { ...t.task, shopper: CYCLE[(CYCLE.indexOf(t.task.shopper ?? null) + 1) % CYCLE.length] });
+                      else open();
+                    };
+                    return (
+                      <div key={t.key} className={`task t-${t.type === 'cook' ? 'cook' : 'buy'}${t.person && t.person === me ? ' mine' : ''}${bad ? ' conflict' : ''}${t.done ? ' is-done' : ''}`}>
+                        <button type="button" className={`check${t.done ? ' on' : ''}`} aria-label={t.done ? 'Marcar pendiente' : 'Marcar hecha'} onClick={toggle}>{t.done ? '✓' : ''}</button>
+                        <button type="button" className="task-main" onClick={open}>
+                          <span className="ag-ico">{t.emoji}</span>
+                          <span className="ag-main">
+                            <small className="task-kind">{t.type === 'cook' ? '🍳 Cocinar' : t.type === 'buy' ? '🛒 Comprar en' : '🛒 Comprar para'}{t.person && t.person === me ? ' · te toca a ti' : ''}</small>
+                            <b>{t.title}</b>
+                            <small>{t.sub}</small>
+                            {bad && <small className="conf-text">🚨 {person(t.person).label} está {absLabel(bad, d)}</small>}
+                          </span>
+                        </button>
+                        <button type="button" className={`tr-btn${t.person ? ' set' : ''}${bad ? ' conflict' : ''}`} aria-label="Asignar responsable" onClick={assign}>
+                          {icon ? <Pic key={t.person} icon={icon} size={52} /> : t.person === 'otros' ? <span className="as-emoji">🧑‍🍳</span> : <span className="tr-empty">{t.type === 'cook' ? '🍳' : '🛒'}<b>?</b></span>}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <AnimatePresence initial={false}>

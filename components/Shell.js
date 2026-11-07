@@ -166,7 +166,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
               </Swipe>
             )}
             {tab === 'agenda' && (
-              <AgendaView save={save} me={me} openMeal={openMeal} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
+              <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
             {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (

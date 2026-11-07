@@ -406,3 +406,17 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .cat-row button.on { background: var(--primary); color: #fff; }
 .dish.used { opacity: .55; } .d-used { position: absolute; top: 4px; left: 6px; font-size: 9.5px; font-weight: 800; font-style: normal; color: var(--amber); }
 @media (min-width: 760px) { .dish-grid { grid-template-columns: repeat(5, 1fr); } }
+
+/* ---------- Tareas en la agenda (cocinar / comprar) ---------- */
+:root { --cook: #f08a24; --buy: #1f9fb0; }
+.task-list { display: grid; gap: 8px; margin-bottom: 8px; }
+.task { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 16px; background: var(--card); border-left: 6px solid var(--cook); }
+.task.t-cook { background: color-mix(in srgb, var(--cook) 13%, var(--card)); border-left-color: var(--cook); }
+.task.t-buy { background: color-mix(in srgb, var(--buy) 13%, var(--card)); border-left-color: var(--buy); }
+.task.mine { box-shadow: 0 0 0 2px var(--primary); }
+.task.conflict { background: color-mix(in srgb, #e5484d 16%, var(--card)); border-left-color: #e5484d; box-shadow: 0 0 0 2px #e5484d; }
+.task.is-done { opacity: .6; } .task.is-done b { text-decoration: line-through; }
+.task-main { flex: 1; display: flex; align-items: center; gap: 10px; text-align: left; min-width: 0; min-height: 60px; }
+.task-kind { font-weight: 800; text-transform: uppercase; letter-spacing: .05em; font-size: 10.5px !important; }
+.t-cook .task-kind { color: var(--cook) !important; } .t-buy .task-kind { color: var(--buy) !important; }
+.quick.on { background: var(--primary); color: #fff; }
