@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { NO_SHOP, PARENTS, SLOTS } from '@/lib/constants';
+import { COOK_WHEN_TAG, PARENTS, SLOTS } from '@/lib/constants';
 import { dayNum, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
 import { absentOn, eventsOn, hhmm, mealAt } from '@/lib/helpers';
 import { personIcon, eventIcons } from '@/lib/icons';
@@ -21,21 +21,19 @@ function Bar({ label, value, total, tone }) {
 
 export default function WeekView({ monday, today, data, openMeal, openEvent, goDay }) {
   const days = weekDays(monday);
-  let planned = 0, needBuy = 0, bought = 0, done = 0;
+  let planned = 0, done = 0;
   for (const d of days) for (const s of SLOTS) {
     const m = mealAt(data.meals, d, s.id);
-    if (m?.dish) {
-      planned++;
-      if (m.done) done++;
-      else if (!NO_SHOP.has(m.dish)) { needBuy++; if (m.shopping_ok) bought++; }
-    }
+    if (m?.dish) { planned++; if (m.done) done++; }
   }
+  const trips = data.shopping.filter((t) => t.date && days.includes(t.date));
+  const tripsDone = trips.filter((t) => t.done).length;
   return (
     <>
       <div className="summary">
         <Bar label="🍽️ Menú planificado" value={planned} total={days.length * SLOTS.length} tone="t-coral" />
         <Bar label="🍽️ Comidas hechas" value={done} total={planned} tone="t-sun" />
-        <Bar label="🛒 Compra lista" value={bought} total={needBuy} tone="t-green" />
+        <Bar label="🛒 Compras de la semana" value={tripsDone} total={trips.length} tone="t-green" />
       </div>
       <motion.div className="stack" variants={list} initial="hidden" animate="show">
         {days.map((d) => {
@@ -54,7 +52,7 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
               </button>
               {SLOTS.map((s) => {
                 const m = mealAt(data.meals, d, s.id);
-                const buy = m?.dish && !m.done && !NO_SHOP.has(m.dish) ? (m.shopping_ok ? 'ok' : 'pending') : null;
+                const buy = m?.dish && !m.done && m.needs_buy;
                 return (
                   <button key={s.id} type="button" className={`meal-row${m?.dish ? '' : ' empty'}${m?.done ? ' done' : ''}`} onClick={() => openMeal(d, s.id)}>
                     <span className="slot-ico" title={s.label}>{s.icon}</span>
@@ -62,12 +60,8 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
                     <span className="mr-dish">{m?.dish || 'Sin planificar'}</span>
                     {m?.done && <span className="done-chip">✓ Hecha</span>}
                     {m?.cook && <Pic icon={personIcon(m.cook === 'otros' ? null : m.cook, 'cocinar')} size={40} animate={false} className="row-pic" />}
-                    {buy && (
-                      <span className={`buy-wrap ${buy}`} title={buy === 'ok' ? 'Hay compra' : 'Falta compra'}>
-                        {m.shopper && m.shopper !== 'otros' && <Pic icon={personIcon(m.shopper, 'comprar')} size={40} animate={false} className="row-pic" />}
-                        <span className={`buy-dot ${buy}`}>{buy === 'ok' ? '✓' : '🛒'}</span>
-                      </span>
-                    )}
+                    {m?.dish && !m.done && m.cook_when && m.cook_when !== 'same' && <span className="when-ico" title={COOK_WHEN_TAG[m.cook_when]}>{m.cook_when === 'eve' ? '🌙' : '📅'}</span>}
+                    {buy && <span className="buy-dot pending" title="Hay que comprar">🛒</span>}
                   </button>
                 );
               })}

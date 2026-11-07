@@ -300,3 +300,55 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .summary { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .as-text small { letter-spacing: .04em; }
 .assign { padding: 8px 10px; gap: 8px; }
+
+/* ---------- Cuándo se cocina y Compras ---------- */
+.tabbar { grid-template-columns: repeat(5, 1fr); }
+.assign-row { grid-template-columns: 1fr; }
+.when { display: grid; gap: 6px; padding: 2px 4px; } .when small { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.when-tag { font-size: 13px; font-weight: 800; padding: 3px 12px; border-radius: 12px; background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue); }
+.when-ico { font-size: 16px; flex: none; }
+.buy-toggle.warn { background: color-mix(in srgb, #e5484d 14%, var(--card)); color: #e5484d; }
+.hint.left { text-align: left; margin: 8px 2px 0; }
+.compras { padding-top: 0; }
+.compras .page-title { margin-top: calc(var(--safe-t) + 18px); }
+.store-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 10px; }
+.store-tile { position: relative; display: grid; justify-items: center; gap: 2px; padding: 14px 6px 12px; border-radius: 20px; background: var(--card); box-shadow: var(--shadow-sm); text-align: center; }
+.store-tile b { font-size: 13.5px; line-height: 1.15; } .store-tile small { color: var(--muted); font-size: 12px; }
+.st-emoji { font-size: 34px; }
+.st-badge { position: absolute; top: 8px; right: 10px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--primary); color: #fff; font-style: normal; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.shop-list { display: grid; margin-bottom: 8px; }
+.shop-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-height: 68px; border-radius: 18px; background: var(--card) !important; box-shadow: var(--shadow-sm); }
+.shop-item.is-done { opacity: .6; } .shop-item.is-done .ag-main b { text-decoration: line-through; }
+.check { width: 36px; height: 36px; flex: none; border-radius: 12px; border: 2.5px solid var(--line); display: grid; place-items: center; font-weight: 900; color: #fff; transition: background .2s, border-color .2s; }
+.check.on { background: var(--green); border-color: var(--green); }
+.si-ico { font-size: 28px; flex: none; }
+.si-date { font-size: 12.5px; font-weight: 800; color: var(--muted); white-space: nowrap; } .si-date.late { color: #e5484d; }
+.store-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.store-opt { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 14px; border-radius: 16px; background: var(--card); border: 2px solid transparent; box-shadow: var(--shadow-sm); text-align: left; font-size: 14.5px; }
+.store-opt span { font-size: 24px; } .store-opt.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--card)); }
+.area { padding: 12px 16px; min-height: 84px; resize: vertical; line-height: 1.4; }
+@media (min-width: 760px) { .shop-list { grid-template-columns: 1fr 1fr; column-gap: 10px; } }
+@media (min-width: 1100px) { .tabbar { grid-template-columns: 1fr; } .tabbar button { min-height: 72px; } }
+
+/* ---------- Extraescolares, identidad, viaje/trabajo ---------- */
+.quick-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 6px; }
+.quick { min-height: 44px; padding: 0 16px; border-radius: 22px; background: var(--card); box-shadow: var(--shadow-sm); font-weight: 700; font-size: 14.5px; transition: transform .15s; }
+.quick:active { transform: scale(.95); }
+.me-btn { border-radius: 50%; line-height: 0; }
+.mine-toggle { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 18px; background: var(--soft); margin-bottom: 6px; }
+.mine-toggle button { min-height: 44px; border-radius: 14px; font-weight: 700; font-size: 14px; color: var(--muted); } .mine-toggle button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+.link.inline { min-height: 0; margin-left: 4px; }
+.who-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+.who-tile { display: grid; justify-items: center; gap: 8px; padding: 16px 8px; border-radius: 26px; background: var(--card); box-shadow: var(--shadow); font-size: 20px; }
+.icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.icon-opt { display: grid; justify-items: center; gap: 3px; padding: 8px 4px; border-radius: 18px; background: var(--card); border: 2px solid transparent; box-shadow: var(--shadow-sm); } .icon-opt small { font-size: 11.5px; font-weight: 700; text-align: center; line-height: 1.15; }
+.icon-opt.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--card)); }
+.day-pick { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.day-pick button { min-height: 52px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow-sm); font-weight: 800; font-size: 17px; border: 2px solid transparent; }
+.day-pick button.on { background: linear-gradient(145deg, var(--primary), var(--primary-2)); color: #fff; }
+.series-list { display: grid; gap: 10px; }
+.series-item { display: grid; gap: 8px; padding: 10px; border-radius: 20px; background: var(--card); box-shadow: var(--shadow-sm); }
+.si-main { display: flex; align-items: center; gap: 12px; text-align: left; min-height: 60px; }
+.btn.sm { min-height: 40px; font-size: 14px; }
+.tr-empty.small { width: 44px; height: 44px; font-size: 18px; }
+@media (max-width: 430px) { .wb-top h1 { font-size: 22px; white-space: nowrap; } .wb-actions { gap: 6px; } .wb-actions .round { width: 40px; height: 40px; } }

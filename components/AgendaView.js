@@ -9,13 +9,18 @@ import SwipeRow from './SwipeRow';
 
 const CYCLE = [null, 'papa', 'mama'];
 
-export default function AgendaView({ save, monday, today, selected, data, openEvent, openAbsence, openAdd, removeWithUndo }) {
+export default function AgendaView({ save, monday, today, selected, data, me, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
   const cycleTransport = (e) => {
     buzz(12);
     save('events', { ...e, transport: CYCLE[(CYCLE.indexOf(e.transport ?? null) + 1) % CYCLE.length] });
   };
   return (
     <div className="agenda-wrap">
+      <div className="quick-row">
+        <button type="button" className="quick" onClick={() => openSeries()}>🎒 Extraescolares</button>
+        <button type="button" className="quick" onClick={() => openAdd(selected, null, { type: 'ausencia', kind: 'viaje' })}>✈️ Me voy de viaje</button>
+        <button type="button" className="quick" onClick={() => openAdd(selected, null, { type: 'ausencia', kind: 'trabajo' })}>💻 Estoy trabajando</button>
+      </div>
       <p className="muted hint">Toca para editar · desliza a la izquierda para borrar · toca el icono 🛵 para asignar quién lleva</p>
       <div className="agenda">
         {weekDays(monday).map((d) => {
@@ -34,7 +39,7 @@ export default function AgendaView({ save, monday, today, selected, data, openEv
                 {abs.map((a) => (
                   <SwipeRow key={a.id} className={`ag-item abs aw-${a.person}`} onClick={() => openAbsence(a)} onDelete={() => removeWithUndo('absences', a)}>
                     <Pic icon={absenceIcon(a)} size={52} animate={false} />
-                    <span className="ag-main"><b>{person(a.person).label} ausente</b>{a.note && <small>{a.note}</small>}</span>
+                    <span className="ag-main"><b>{person(a.person).label} {a.kind === 'viaje' ? 'de viaje' : a.kind === 'trabajo' ? 'trabajando' : 'ausente'}</b>{a.note && <small>{a.note}</small>}</span>
                     {a.start_date !== a.end_date && <em>{a.start_date.slice(8)}/{a.start_date.slice(5, 7)} → {a.end_date.slice(8)}/{a.end_date.slice(5, 7)}</em>}
                   </SwipeRow>
                 ))}
@@ -45,7 +50,7 @@ export default function AgendaView({ save, monday, today, selected, data, openEv
                       {icons.length ? <PicStack icons={icons} size={52} /> : <span className="ag-ico">{e.emoji}</span>}
                       <span className="ag-main">
                         <b>{e.title}</b>
-                        <small>{[e.kind === 'extraescolar' ? 'Extraescolar' : 'Evento', e.who, e.repeat === 'weekly' ? '🔁 semanal' : ''].filter(Boolean).join(' · ')}</small>
+                        <small>{[e.kind === 'extraescolar' ? `Extraescolar ${e.location === 'school' ? '🏫 cole' : '📍 fuera'}` : 'Evento', e.who, e.repeat === 'weekly' ? '🔁 semanal' : e.series_id ? '🔁 serie' : ''].filter(Boolean).join(' · ')}</small>
                       </span>
                       <em>{hhmm(e.time) || 'Todo el día'}</em>
                       {e.needs_transport && (
