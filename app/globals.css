@@ -362,3 +362,20 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .fam-check { margin-left: auto; color: var(--primary); font-weight: 900; font-size: 20px; }
 .fam-forget { width: 48px; height: 60px; color: var(--muted); font-size: 16px; }
 .btn.wide { width: 100%; }
+
+/* ---------- Transporte: verde más oscuro y conflictos ---------- */
+.ag-item.k-extraescolar.tr-need { background: color-mix(in srgb, var(--green) 26%, var(--card)) !important; }
+.ev-chip.k-extraescolar.tr-need { background: color-mix(in srgb, var(--green) 30%, var(--card)); }
+.ag-item.conflict, .ev-chip.conflict { background: color-mix(in srgb, #e5484d 18%, var(--card)) !important; box-shadow: inset 0 0 0 2px #e5484d; }
+.ev-chip.conflict { box-shadow: 0 0 0 2px #e5484d; }
+.conf-text { color: #e5484d !important; font-weight: 800; }
+.tr-btn.conflict .pic { box-shadow: 0 0 0 3px #e5484d; }
+.tr-btn.conflict::after { content: '⚠️'; position: absolute; right: -2px; top: -4px; font-size: 16px; }
+.tr-btn { position: relative; }
+.alert.special { background: color-mix(in srgb, #e5484d 15%, var(--card)) !important; border-left-color: #e5484d; box-shadow: 0 0 0 2px #e5484d, var(--shadow-sm); }
+.alert.special .al-main small { color: #e5484d; }
+.away-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 4px; }
+.dc-head { flex-wrap: wrap; row-gap: 6px; }
+.dc-head .away-chip { white-space: normal; font-size: 12px; }
+.dc-head .grow { display: none; }
+.dc-head .away-chip:first-of-type { margin-left: auto; }

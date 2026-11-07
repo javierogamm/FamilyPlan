@@ -2,7 +2,7 @@
 import { AnimatePresence } from 'framer-motion';
 import { person } from '@/lib/constants';
 import { dayNum, weekDays, weekdayName } from '@/lib/dates';
-import { buzz, eventsOn, hhmm } from '@/lib/helpers';
+import { absLabel, absenceAt, buzz, eventsOn, hhmm } from '@/lib/helpers';
 import { absenceIcon, eventIcons, personIcon } from '@/lib/icons';
 import { Pic, PicStack } from './Pic';
 import SwipeRow from './SwipeRow';
@@ -39,22 +39,24 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                 {abs.map((a) => (
                   <SwipeRow key={a.id} className={`ag-item abs aw-${a.person}`} onClick={() => openAbsence(a)} onDelete={() => removeWithUndo('absences', a)}>
                     <Pic icon={absenceIcon(a)} size={52} animate={false} />
-                    <span className="ag-main"><b>{person(a.person).label} {a.kind === 'viaje' ? 'de viaje' : a.kind === 'trabajo' ? 'trabajando' : 'ausente'}</b>{a.note && <small>{a.note}</small>}</span>
+                    <span className="ag-main"><b>{person(a.person).label} {absLabel(a, d)}</b>{a.note && <small>{a.note}</small>}</span>
                     {a.start_date !== a.end_date && <em>{a.start_date.slice(8)}/{a.start_date.slice(5, 7)} → {a.end_date.slice(8)}/{a.end_date.slice(5, 7)}</em>}
                   </SwipeRow>
                 ))}
                 {evs.map((e) => {
                   const icons = eventIcons(e);
+                  const bad = e.needs_transport && e.transport ? absenceAt(data.absences, e.transport, d, hhmm(e.time)) : null;
                   return (
-                    <SwipeRow key={e.id} className={`ag-item k-${e.kind}`} onClick={() => openEvent(e)} onDelete={() => removeWithUndo('events', e)}>
+                    <SwipeRow key={e.id} className={`ag-item k-${e.kind}${e.needs_transport ? ' tr-need' : ''}${bad ? ' conflict' : ''}`} onClick={() => openEvent(e)} onDelete={() => removeWithUndo('events', e)}>
                       {icons.length ? <PicStack icons={icons} size={52} /> : <span className="ag-ico">{e.emoji}</span>}
                       <span className="ag-main">
                         <b>{e.title}</b>
                         <small>{[e.kind === 'extraescolar' ? `Extraescolar ${e.location === 'school' ? '🏫 cole' : '📍 fuera'}` : 'Evento', e.who, e.repeat === 'weekly' ? '🔁 semanal' : e.series_id ? '🔁 serie' : ''].filter(Boolean).join(' · ')}</small>
+                        {bad && <small className="conf-text">🚨 {person(e.transport).label} está {absLabel(bad, d)}</small>}
                       </span>
                       <em>{hhmm(e.time) || 'Todo el día'}</em>
                       {e.needs_transport && (
-                        <button type="button" className={`tr-btn${e.transport ? ' set' : ''}`} aria-label="Asignar quién lleva o recoge" onClick={(ev) => { ev.stopPropagation(); cycleTransport(e); }}>
+                        <button type="button" className={`tr-btn${e.transport ? ' set' : ''}${bad ? ' conflict' : ''}`} aria-label="Asignar quién lleva o recoge" onClick={(ev) => { ev.stopPropagation(); cycleTransport(e); }}>
                           {e.transport ? <Pic key={e.transport} icon={personIcon(e.transport, 'transporte')} size={52} /> : <span className="tr-empty">🛵<b>?</b></span>}
                         </button>
                       )}

@@ -1,9 +1,9 @@
 'use client';
 import { motion } from 'framer-motion';
-import { COOK_WHEN_TAG, PARENTS, SLOTS } from '@/lib/constants';
+import { COOK_WHEN_TAG, SLOTS } from '@/lib/constants';
 import { dayNum, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
-import { absentOn, eventsOn, hhmm, mealAt } from '@/lib/helpers';
-import { personIcon, eventIcons } from '@/lib/icons';
+import { absLabel, absenceAt, awayList, eventsOn, hhmm, mealAt } from '@/lib/helpers';
+import { absenceIcon, personIcon, eventIcons } from '@/lib/icons';
 import { Pic, PicStack } from './Pic';
 
 const list = { show: { transition: { staggerChildren: 0.06 } } };
@@ -37,7 +37,7 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
       </div>
       <motion.div className="stack" variants={list} initial="hidden" animate="show">
         {days.map((d) => {
-          const away = absentOn(data.absences, d);
+          const away = awayList(data.absences, d);
           const evs = eventsOn(data.events, d);
           return (
             <motion.section key={d} variants={item} className={`day-card${d === today ? ' today' : ''}`}>
@@ -46,8 +46,8 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
                 <span className="dc-name">{weekdayName(d)}</span>
                 {d === today && <span className="badge">Hoy</span>}
                 <span className="grow" />
-                {PARENTS.filter((p) => away.includes(p.id)).map((p) => (
-                  <span key={p.id} className={`away-chip aw-${p.id}`}>{p.emoji} fuera</span>
+                {away.map((a) => (
+                  <span key={a.id} className={`away-chip aw-${a.person}`}><Pic icon={absenceIcon(a)} size={30} animate={false} />{absLabel(a, d)}</span>
                 ))}
               </button>
               {SLOTS.map((s) => {
@@ -68,7 +68,7 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
               {evs.length > 0 && (
                 <div className="ev-list">
                   {evs.map((e) => (
-                    <button key={e.id} type="button" className={`ev-chip k-${e.kind}`} onClick={() => openEvent(e, d)}>
+                    <button key={e.id} type="button" className={`ev-chip k-${e.kind}${e.needs_transport ? ' tr-need' : ''}${e.needs_transport && e.transport && absenceAt(data.absences, e.transport, d, hhmm(e.time)) ? ' conflict' : ''}`} onClick={() => openEvent(e, d)}>
                       {eventIcons(e).length ? <PicStack icons={eventIcons(e)} size={30} /> : <span>{e.emoji}</span>}
                       <b>{hhmm(e.time)}</b>
                       {e.needs_transport && <span className={`tr-tag${e.transport ? ' set' : ''}`}>{e.transport ? <Pic icon={personIcon(e.transport, 'transporte')} size={30} animate={false} /> : '🛵?'}</span>}
