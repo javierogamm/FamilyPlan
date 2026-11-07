@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { addDays, diffDays, mondayOf, startDay, todayISO } from '@/lib/dates';
+import { addDays, diffDays, isWeekend, mondayOf, startDay, todayISO } from '@/lib/dates';
 import { computeAlerts } from '@/lib/alerts';
 import { buzz } from '@/lib/helpers';
 import { useFamily } from '@/lib/store';
@@ -118,7 +118,9 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
     showToast({ msg: 'Aviso descartado', undo: () => { const r = next.filter((x) => x !== id); setDismissed(r); persist('fp_dismissed', r); } });
   };
   const goAlert = (a) => {
-    goDate(startDay(a.go.date));
+    const gd = a.go.date;
+    setMonday(mondayOf(gd));
+    setSelected(isWeekend(gd) ? addDays(mondayOf(gd), 4) : gd);
     setTab(a.go.tab);
     if (a.go.slot) openMeal(a.go.date, a.go.slot);
   };
@@ -164,7 +166,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
               </Swipe>
             )}
             {tab === 'agenda' && (
-              <AgendaView save={save} me={me} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
+              <AgendaView save={save} me={me} openMeal={openMeal} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
             {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (

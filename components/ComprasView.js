@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SLOTS, STORES, person, store } from '@/lib/constants';
 import { diffDays, fromISO, weekdayName } from '@/lib/dates';
-import { buzz, mealAt } from '@/lib/helpers';
+import { buzz, isPlanned, mealEmoji, mealName } from '@/lib/helpers';
 import { personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 import SwipeRow from './SwipeRow';
@@ -25,7 +25,7 @@ export default function ComprasView({ today, data, save, openShop, removeWithUnd
   const pending = data.shopping.filter((t) => !t.done).sort((a, b) => (a.date || '9').localeCompare(b.date || '9'));
   const done = data.shopping.filter((t) => t.done).sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 15);
   const needs = data.meals
-    .filter((m) => m.dish && m.needs_buy && !m.done && m.date >= today)
+    .filter((m) => isPlanned(m) && m.needs_buy && !m.done && m.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || a.slot.localeCompare(b.slot));
   const count = (id) => pending.filter((t) => t.store === id).length;
   const assign = (t) => { buzz(12); save('shopping', { ...t, shopper: CYCLE[(CYCLE.indexOf(t.shopper ?? null) + 1) % CYCLE.length] }); };
@@ -70,8 +70,8 @@ export default function ComprasView({ today, data, save, openShop, removeWithUnd
           <h3 className="section">🍽️ Comidas que necesitan compra</h3>
           <div className="chips no-top">
             {needs.map((m) => (
-              <button key={m.date + m.slot} type="button" className="chip" onClick={() => openShop({ prefill: { items: m.dish, date: m.date } })}>
-                {m.emoji} {m.dish} <small>{weekdayName(m.date).slice(0, 3)} {SLOTS.find((s) => s.id === m.slot).icon}</small>
+              <button key={m.date + m.slot} type="button" className="chip" onClick={() => openShop({ prefill: { items: mealName(m), date: m.date } })}>
+                {mealEmoji(m)} {mealName(m)} <small>{weekdayName(m.date).slice(0, 3)} {SLOTS.find((s) => s.id === m.slot).icon}</small>
               </button>
             ))}
           </div>

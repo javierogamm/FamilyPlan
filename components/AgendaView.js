@@ -1,15 +1,28 @@
 'use client';
 import { AnimatePresence } from 'framer-motion';
-import { person } from '@/lib/constants';
-import { dayNum, weekDays, weekdayName } from '@/lib/dates';
-import { absLabel, absenceAt, buzz, eventsOn, hhmm } from '@/lib/helpers';
+import { SLOTS, person } from '@/lib/constants';
+import { addDays, dayNum, fromISO, weekDays, weekdayName } from '@/lib/dates';
+import { absLabel, absenceAt, buzz, eventsOn, hhmm, isPlanned, mealAt, mealEmoji, mealName } from '@/lib/helpers';
 import { absenceIcon, eventIcons, personIcon } from '@/lib/icons';
 import { Pic, PicStack } from './Pic';
 import SwipeRow from './SwipeRow';
 
 const CYCLE = [null, 'papa', 'mama'];
 
-export default function AgendaView({ save, monday, today, selected, data, me, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
+/** Platos de la semana siguiente marcados para cocinar el fin de semana (sábado: todos; domingo: solo pendientes). */
+function weekendCooking(meals, d) {
+  const dow = fromISO(d).getDay();
+  if (dow !== 6 && dow !== 0) return [];
+  const mon = addDays(d, dow === 6 ? 2 : 1);
+  const list = [];
+  for (let i = 0; i < 5; i++) for (const s of SLOTS) {
+    const m = mealAt(meals, addDays(mon, i), s.id);
+    if (isPlanned(m) && m.cook_when === 'weekend' && (dow === 6 || !m.done)) list.push({ m, slot: s });
+  }
+  return list;
+}
+
+export default function AgendaView({ save, monday, today, selected, data, me, openMeal, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
   const cycleTransport = (e) => {
     buzz(12);
     save('events', { ...e, transport: CYCLE[(CYCLE.indexOf(e.transport ?? null) + 1) % CYCLE.length] });
@@ -23,10 +36,11 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
       </div>
       <p className="muted hint">Toca para editar · desliza a la izquierda para borrar · toca el icono 🛵 para asignar quién lleva</p>
       <div className="agenda">
-        {weekDays(monday).map((d) => {
+        {weekDays(monday, 7).map((d) => {
           const evs = eventsOn(data.events, d);
           const abs = data.absences.filter((a) => a.start_date <= d && d <= a.end_date);
-          const empty = !evs.length && !abs.length;
+          const cook = weekendCooking(data.meals, d);
+          const empty = !evs.length && !abs.length && !cook.length;
           return (
             <section key={d} className={`ag-day${d === today ? ' today' : ''}${d === selected ? ' sel' : ''}`}>
               <div className="ag-head">
@@ -35,6 +49,21 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                 <span className="grow" />
                 <button type="button" className="round sm" aria-label="Añadir" onClick={() => openAdd(d)}>＋</button>
               </div>
+              {cook.length > 0 && (
+                <div className="cook-block">
+                  <h4>🍳 Cocinar este finde <small>para la semana que viene</small></h4>
+                  {cook.map(({ m, slot }) => (
+                    <div key={m.date + m.slot} className={`cook-item${m.done ? ' is-done' : ''}${m.cook && m.cook === me ? ' mine' : ''}`}>
+                      <button type="button" className={`check${m.done ? ' on' : ''}`} aria-label={m.done ? 'Marcar pendiente' : 'Marcar hecha'} onClick={() => { buzz(18); save('meals', { ...m, done: !m.done }); }}>{m.done ? '✓' : ''}</button>
+                      <button type="button" className="ck-main" onClick={() => openMeal(m.date, m.slot)}>
+                        <span className="ag-ico">{mealEmoji(m)}</span>
+                        <span className="ag-main"><b>{mealName(m)}</b><small>{weekdayName(m.date)} · {slot.label.toLowerCase()}{m.cook === me ? ' · te toca a ti' : ''}</small></span>
+                        {m.cook ? <Pic icon={personIcon(m.cook === 'otros' ? null : m.cook, 'cocinar')} size={48} animate={false} /> : <span className="tr-empty small">🍳<b>?</b></span>}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <AnimatePresence initial={false}>
                 {abs.map((a) => (
                   <SwipeRow key={a.id} className={`ag-item abs aw-${a.person}`} onClick={() => openAbsence(a)} onDelete={() => removeWithUndo('absences', a)}>

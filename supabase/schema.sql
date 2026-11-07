@@ -14,6 +14,8 @@ create table if not exists meals (
   slot text not null check (slot in ('comida','cena')),
   dish text not null default '',
   emoji text not null default '🍽️',
+  dish2 text not null default '',
+  emoji2 text not null default '🍽️',
   cook text check (cook in ('papa','mama','otros')),
   shopper text check (shopper in ('papa','mama','otros')),
   shopping_ok boolean not null default false,
@@ -72,12 +74,18 @@ create table if not exists dishes (
   household_id uuid not null references households(id) on delete cascade,
   name text not null,
   emoji text not null default '🍽️',
+  course text not null default 'both' check (course in ('primero','segundo','both')),
   unique (household_id, name)
 );
 
 create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
+
+-- Migración 5 (primero y segundo, platos propios por curso):
+alter table meals add column if not exists dish2 text not null default '';
+alter table meals add column if not exists emoji2 text not null default '🍽️';
+alter table dishes add column if not exists course text not null default 'both' check (course in ('primero','segundo','both'));
 
 -- Migración 4 (hora de inicio de viajes / trabajo):
 alter table absences add column if not exists start_time time;

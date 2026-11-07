@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { COOK_WHEN, COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
 import { longDate } from '@/lib/dates';
-import { absLabel, awayList, buzz, eventsOn, hhmm, mealAt } from '@/lib/helpers';
+import { absLabel, awayList, buzz, eventsOn, hhmm, isPlanned, mealAt } from '@/lib/helpers';
 import { absenceIcon, personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 import { Segmented } from './ui';
@@ -23,7 +23,7 @@ function AssignTile({ value, onChange }) {
 }
 
 function MealCard({ date, slot, meal, openMeal, save }) {
-  const filled = !!meal?.dish;
+  const filled = isPlanned(meal);
   const patch = (p) => save('meals', { ...meal, ...p });
   const cw = meal?.cook_when || 'same';
   return (
@@ -32,10 +32,11 @@ function MealCard({ date, slot, meal, openMeal, save }) {
         <span className="mc-slot">{slot.icon} {slot.label}{meal?.done && <b className="done-tag">✓ Hecha</b>}</span>
         {filled ? (
           <>
-            <motion.span key={meal.emoji + meal.dish} className="mc-emoji" initial={{ scale: 0.3, rotate: -25, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 15 }}>
-              {meal.emoji}
+            <motion.span key={meal.emoji + meal.dish + meal.dish2} className={`mc-emoji${meal.dish && meal.dish2 ? ' two' : ''}`} initial={{ scale: 0.3, rotate: -25, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 15 }}>
+              {[meal.dish && meal.emoji, meal.dish2 && meal.emoji2].filter(Boolean).join(' ')}
             </motion.span>
-            <span className="mc-dish">{meal.dish}</span>
+            <span className="mc-dish">{meal.dish || meal.dish2}</span>
+            {meal.dish && meal.dish2 && <span className="mc-dish2">＋ {meal.dish2}</span>}
             {cw !== 'same' && <span className="when-tag">{COOK_WHEN_TAG[cw]}</span>}
           </>
         ) : (

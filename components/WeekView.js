@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { COOK_WHEN_TAG, SLOTS } from '@/lib/constants';
 import { dayNum, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
-import { absLabel, absenceAt, awayList, eventsOn, hhmm, mealAt } from '@/lib/helpers';
+import { absLabel, absenceAt, awayList, eventsOn, hhmm, isPlanned, mealAt, mealEmoji, mealName } from '@/lib/helpers';
 import { absenceIcon, personIcon, eventIcons } from '@/lib/icons';
 import { Pic, PicStack } from './Pic';
 
@@ -24,7 +24,7 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
   let planned = 0, done = 0;
   for (const d of days) for (const s of SLOTS) {
     const m = mealAt(data.meals, d, s.id);
-    if (m?.dish) { planned++; if (m.done) done++; }
+    if (isPlanned(m)) { planned++; if (m.done) done++; }
   }
   const trips = data.shopping.filter((t) => t.date && days.includes(t.date));
   const tripsDone = trips.filter((t) => t.done).length;
@@ -52,15 +52,15 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
               </button>
               {SLOTS.map((s) => {
                 const m = mealAt(data.meals, d, s.id);
-                const buy = m?.dish && !m.done && m.needs_buy;
+                const buy = isPlanned(m) && !m.done && m.needs_buy;
                 return (
-                  <button key={s.id} type="button" className={`meal-row${m?.dish ? '' : ' empty'}${m?.done ? ' done' : ''}`} onClick={() => openMeal(d, s.id)}>
+                  <button key={s.id} type="button" className={`meal-row${isPlanned(m) ? '' : ' empty'}${m?.done ? ' done' : ''}`} onClick={() => openMeal(d, s.id)}>
                     <span className="slot-ico" title={s.label}>{s.icon}</span>
-                    <span className="mr-emoji">{m?.dish ? m.emoji : '＋'}</span>
-                    <span className="mr-dish">{m?.dish || 'Sin planificar'}</span>
+                    <span className="mr-emoji">{isPlanned(m) ? mealEmoji(m) : '＋'}</span>
+                    <span className="mr-dish">{isPlanned(m) ? mealName(m) : 'Sin planificar'}</span>
                     {m?.done && <span className="done-chip">✓ Hecha</span>}
                     {m?.cook && <Pic icon={personIcon(m.cook === 'otros' ? null : m.cook, 'cocinar')} size={40} animate={false} className="row-pic" />}
-                    {m?.dish && !m.done && m.cook_when && m.cook_when !== 'same' && <span className="when-ico" title={COOK_WHEN_TAG[m.cook_when]}>{m.cook_when === 'eve' ? '🌙' : '📅'}</span>}
+                    {isPlanned(m) && !m.done && m.cook_when && m.cook_when !== 'same' && <span className="when-ico" title={COOK_WHEN_TAG[m.cook_when]}>{m.cook_when === 'eve' ? '🌙' : '📅'}</span>}
                     {buy && <span className="buy-dot pending" title="Hay que comprar">🛒</span>}
                   </button>
                 );
