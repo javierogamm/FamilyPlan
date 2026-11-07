@@ -40,7 +40,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const [today, setToday] = useState(todayISO);
   const [toast, setToast] = useState(null);
   const showToast = useCallback((t) => setToast({ ...t, n: Date.now() }), []);
-  const { data, ready, save, saveMany, remove, removeSeries } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
+  const { data, ready, save, saveMany, remove, removeSeries, removeChecked } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
 
   const [tab, setTab] = useState('semana');
   const [monday, setMonday] = useState(() => mondayOf(startDay(todayISO())));
@@ -178,7 +178,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
             {tab === 'agenda' && (
               <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
-            {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
+            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
               <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={() => open({ kind: 'who' })} />
             )}
@@ -200,7 +200,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
             {tab === t.id && <motion.span layoutId="tabpill" className="tab-pill" transition={{ type: 'spring', stiffness: 450, damping: 34 }} />}
             <span className="tab-ico">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d={t.d} /></svg>
-              {t.id === 'avisos' && urgent > 0 && <motion.b key={urgent} className="badge-n" initial={{ scale: 0 }} animate={{ scale: 1 }}>{urgent}</motion.b>}
+              {(() => { const n = t.id === 'avisos' ? urgent : t.id === 'compras' ? data.list_items.filter((i) => !i.checked).length : 0; return n > 0 && <motion.b key={n} className={`badge-n${t.id === 'compras' ? ' info' : ''}`} initial={{ scale: 0 }} animate={{ scale: 1 }}>{n}</motion.b>; })()}
             </span>
             <span className="tab-label">{t.label}</span>
           </button>

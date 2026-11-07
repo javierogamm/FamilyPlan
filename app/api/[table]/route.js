@@ -17,6 +17,15 @@ const SCHEMA = {
     required: ['id', 'date', 'title', 'kind'],
     fields: { id: 'uuid', date: 'date', time: 'time', title: 's80', kind: ['evento', 'extraescolar'], who: 's60', repeat: ['none', 'weekly'], emoji: 's8', series_id: 'uuid?', location: ['school', 'outside'], icon: 's30', needs_transport: 'bool', transport: ['papa', 'mama', null], activity: 's20' },
   },
+  list_items: {
+    required: ['id', 'name'],
+    fields: { id: 'uuid', name: 's60', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], qty: 'int', carry: 'int', checked: 'bool', added_by: ['papa', 'mama', null] },
+  },
+  item_stock: {
+    conflict: 'household_id,name_key',
+    required: ['name'],
+    fields: { name: 's60', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], emoji: 's8', uses: 'int', last_used: 'date?' },
+  },
   shopping: {
     required: ['id', 'store'],
     fields: { id: 'uuid', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], items: 's200', shopper: [...PEOPLE, null], date: 'date?', done: 'bool' },
@@ -43,6 +52,10 @@ function check(rule, v, name) {
   if (rule === 'date?') {
     if (v == null || v === '') return null;
     return check('date', v, name);
+  }
+  if (rule === 'int') {
+    if (!Number.isInteger(v) || v < 0 || v > 100000) throw bad();
+    return v;
   }
   if (rule === 'time') {
     if (v == null || v === '') return null;
@@ -82,6 +95,10 @@ function build(table, s, hid, body) {
   if (table === 'absences' && row.end_date < row.start_date) throw new HttpError(400, 'La fecha final es anterior a la inicial');
   if ((table === 'dishes' || table === 'events') && !(row.name ?? row.title)) throw new HttpError(400, 'Nombre vacío');
   if (table === 'meals') row.updated_at = new Date().toISOString();
+  if (table === 'item_stock') {
+    if (!row.name) throw new HttpError(400, 'Nombre vacío');
+    row.name_key = row.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
   return row;
 }
 
@@ -110,7 +127,9 @@ export const DELETE = handle(async (request, { params }) => {
   const hid = await householdId(request);
   const sp = new URL(request.url).searchParams;
   let q = db().from(table).delete().eq('household_id', hid);
-  if (table === 'events' && sp.get('series')) {
+  if (table === 'list_items' && sp.get('checked')) {
+    q = q.eq('checked', true);
+  } else if (table === 'events' && sp.get('series')) {
     q = q.eq('series_id', check('uuid', sp.get('series'), 'series')).gte('date', check('date', sp.get('from'), 'from'));
   } else if (table === 'meals') {
     const date = sp.get('date');

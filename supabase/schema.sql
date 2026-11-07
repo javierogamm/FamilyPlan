@@ -84,6 +84,33 @@ create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
 
+-- Migración 7 (lista de la compra):
+create table if not exists list_items (
+  id uuid primary key,
+  household_id uuid not null references households(id) on delete cascade,
+  name text not null,
+  store text not null default 'super' check (store in ('super','fruteria','carniceria','pascual','otros')),
+  qty int not null default 1,
+  carry int not null default 0,
+  checked boolean not null default false,
+  added_by text check (added_by in ('papa','mama')),
+  created_at timestamptz not null default now()
+);
+create index if not exists list_items_hh on list_items (household_id, checked);
+create table if not exists item_stock (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  name text not null,
+  name_key text not null,
+  store text not null default 'super' check (store in ('super','fruteria','carniceria','pascual','otros')),
+  emoji text not null default '🛒',
+  uses int not null default 0,
+  last_used date,
+  unique (household_id, name_key)
+);
+alter table list_items disable row level security;
+alter table item_stock disable row level security;
+
 -- Migración 6 (comida sugerida):
 alter table meals add column if not exists suggested boolean not null default false;
 alter table meals add column if not exists suggested_by text check (suggested_by in ('papa','mama'));
