@@ -22,7 +22,7 @@ function dateTag(d, today) {
   return { text: `${weekdayName(d)} ${dm}`, late: false };
 }
 
-export default function ComprasView({ today, data, me, save, saveMany, removeChecked, toast, openShop, removeWithUndo }) {
+export default function ComprasView({ today, data, me, save, saveMany, removeChecked, toast, openShop, openListSheet, listId, setListId, removeWithUndo }) {
   const [showDone, setShowDone] = useState(false);
   const [view, setView] = useState('lista');
   const seg = <Segmented name="compras-view" value={view} onChange={setView} options={[{ value: 'lista', label: '🧾 Lista de la compra' }, { value: 'tareas', label: '🗓️ Compras' }]} />;
@@ -38,6 +38,7 @@ export default function ComprasView({ today, data, me, save, saveMany, removeChe
   const row = (t) => {
     const st = store(t.store);
     const tag = dateTag(t.date, today);
+    const lst = t.list_id ? [{ id: 'main', name: 'Principal', emoji: '🧾' }, ...data.lists].find((l) => l.id === t.list_id) : null;
     const icon = t.shopper && t.shopper !== 'otros' ? personIcon(t.shopper, 'comprar') : null;
     return (
       <SwipeRow key={t.id} className={`shop-item${t.done ? ' is-done' : ''}`} onClick={() => openShop({ edit: t })} onDelete={() => removeWithUndo('shopping', t)}>
@@ -45,7 +46,10 @@ export default function ComprasView({ today, data, me, save, saveMany, removeChe
           <motion.span key={String(t.done)} initial={{ scale: 0.3 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }}>{t.done ? '✓' : ''}</motion.span>
         </button>
         <span className="si-ico">{st.emoji}</span>
-        <span className="ag-main"><b>{st.label}</b><small>{t.items || 'Sin detalle'}</small></span>
+        <span className="ag-main">
+          <b>{st.label}</b><small>{t.items || 'Sin detalle'}</small>
+          {lst && <button type="button" className="list-link" onClick={() => { setListId(lst.id); setView('lista'); }}>{lst.emoji} {lst.name} · {data.list_items.filter((x) => !x.checked && (x.list_id || 'main') === lst.id).length} por coger ›</button>}
+        </span>
         <span className={`si-date${tag.late ? ' late' : ''}`}>{tag.text}</span>
         <button type="button" className={`tr-btn${t.shopper ? ' set' : ''}`} aria-label="Asignar quién compra" onClick={() => assign(t)}>
           {icon ? <Pic key={t.shopper} icon={icon} size={52} /> : t.shopper === 'otros' ? <span className="as-emoji">🧑‍🍳</span> : <span className="tr-empty">🛒<b>?</b></span>}
@@ -59,7 +63,7 @@ export default function ComprasView({ today, data, me, save, saveMany, removeChe
       <div className="compras">
         <h1 className="page-title">Compras</h1>
         {seg}
-        <ListaView today={today} data={data} me={me} save={save} saveMany={saveMany} remove={removeWithUndo} removeChecked={removeChecked} toast={toast} />
+        <ListaView today={today} data={data} me={me} save={save} saveMany={saveMany} remove={removeWithUndo} removeChecked={removeChecked} toast={toast} listId={listId} setListId={setListId} openListSheet={openListSheet} />
       </div>
     );
   }
