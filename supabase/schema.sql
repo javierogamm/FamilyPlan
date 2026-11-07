@@ -18,6 +18,8 @@ create table if not exists meals (
   shopper text check (shopper in ('papa','mama','otros')),
   shopping_ok boolean not null default false,
   done boolean not null default false,
+  needs_buy boolean not null default false,
+  cook_when text not null default 'same' check (cook_when in ('same','eve','weekend')),
   note text not null default '',
   updated_at timestamptz not null default now(),
   unique (household_id, date, slot)
@@ -48,6 +50,18 @@ create table if not exists events (
   activity text not null default ''
 );
 
+create table if not exists shopping (
+  id uuid primary key,
+  household_id uuid not null references households(id) on delete cascade,
+  store text not null check (store in ('super','fruteria','carniceria','pascual','otros')),
+  items text not null default '',
+  shopper text check (shopper in ('papa','mama','otros')),
+  date date,
+  done boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists shopping_hh on shopping (household_id, done, date);
+
 create table if not exists dishes (
   id uuid primary key,
   household_id uuid not null references households(id) on delete cascade,
@@ -60,7 +74,12 @@ create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
 
--- Migración para bases ya creadas (iconos, transporte y comidas hechas):
+-- Migración para bases ya creadas (iconos, transporte, comidas hechas, cuándo se cocina y compras):
+alter table meals add column if not exists needs_buy boolean not null default false;
+alter table meals add column if not exists cook_when text not null default 'same' check (cook_when in ('same','eve','weekend'));
+create table if not exists shopping (id uuid primary key, household_id uuid not null references households(id) on delete cascade, store text not null check (store in ('super','fruteria','carniceria','pascual','otros')), items text not null default '', shopper text check (shopper in ('papa','mama','otros')), date date, done boolean not null default false, created_at timestamptz not null default now());
+create index if not exists shopping_hh on shopping (household_id, done, date);
+alter table shopping disable row level security;
 alter table meals add column if not exists done boolean not null default false;
 alter table events add column if not exists needs_transport boolean not null default false;
 alter table events add column if not exists transport text check (transport in ('papa','mama'));

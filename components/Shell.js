@@ -10,6 +10,8 @@ import WeekView from './WeekView';
 import MealsView from './MealsView';
 import AgendaView from './AgendaView';
 import AlertsView from './AlertsView';
+import ComprasView from './ComprasView';
+import ShopSheet from './ShopSheet';
 import MealSheet from './MealSheet';
 import AddSheet from './AddSheet';
 import Swipe from './Swipe';
@@ -17,6 +19,7 @@ import Swipe from './Swipe';
 const TABS = [
   { id: 'semana', label: 'Semana', d: 'M4 6h16M4 12h16M4 18h10' },
   { id: 'comidas', label: 'Comidas', d: 'M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 21V3c-2.5 1.5-3.5 5-3.5 8h3.5' },
+  { id: 'compras', label: 'Compras', d: 'M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 8H6M9 20h.01M17 20h.01' },
   { id: 'agenda', label: 'Agenda', d: 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM4 10h16M9 3v4M15 3v4' },
   { id: 'avisos', label: 'Avisos', d: 'M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15zM10 21a2 2 0 0 0 4 0' },
 ];
@@ -91,6 +94,7 @@ export default function Shell({ code, onLogout }) {
   const open = (s) => setSheet({ ...s, open: true, n: ++counter.current });
   const closeSheet = useCallback(() => setSheet((s) => s && { ...s, open: false }), []);
   const openMeal = (date, slotId) => open({ kind: 'meal', date, slotId });
+  const openShop = (o = {}) => open({ kind: 'shop', ...o });
   const openAdd = (date, edit = null) => open({ kind: 'add', date, edit });
 
   const removeWithUndo = (table, row) => {
@@ -104,7 +108,7 @@ export default function Shell({ code, onLogout }) {
     showToast({ msg: 'Aviso descartado', undo: () => { const r = next.filter((x) => x !== id); setDismissed(r); persist('fp_dismissed', r); } });
   };
   const goAlert = (a) => {
-    goDate(a.go.date);
+    goDate(startDay(a.go.date));
     setTab(a.go.tab);
     if (a.go.slot) openMeal(a.go.date, a.go.slot);
   };
@@ -131,7 +135,7 @@ export default function Shell({ code, onLogout }) {
   return (
     <div className="app">
       <div className="blobs" aria-hidden><i /><i /><i /></div>
-      {tab !== 'avisos' && (
+      {tab !== 'avisos' && tab !== 'compras' && (
         <WeekBar monday={monday} selected={selected} today={today} showDays={tab !== 'semana'} data={data} onSelect={selectDay} onShift={shiftWeek} onToday={goToday} />
       )}
       <main className="main">
@@ -146,12 +150,13 @@ export default function Shell({ code, onLogout }) {
             )}
             {tab === 'comidas' && (
               <Swipe id={`d-${selected}`} dir={dir} onSwipe={shiftDay}>
-                <MealsView monday={monday} date={selected} data={data} openMeal={openMeal} save={save} />
+                <MealsView date={selected} data={data} openMeal={openMeal} save={save} />
               </Swipe>
             )}
             {tab === 'agenda' && (
               <AgendaView save={save} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={(d) => openAdd(d)} removeWithUndo={removeWithUndo} />
             )}
+            {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
               <AlertsView alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={onLogout} />
             )}
@@ -190,6 +195,7 @@ export default function Shell({ code, onLogout }) {
       </AnimatePresence>
 
       {sheet?.kind === 'meal' && <MealSheet key={sheet.n} open={sheet.open} date={sheet.date} slotId={sheet.slotId} data={data} save={save} remove={removeWithUndo} onClose={closeSheet} />}
+      {sheet?.kind === 'shop' && <ShopSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} store={sheet.store} prefill={sheet.prefill} save={save} onDelete={(row) => removeWithUndo('shopping', row)} onClose={closeSheet} />}
       {sheet?.kind === 'add' && <AddSheet key={sheet.n} open={sheet.open} date={sheet.date} edit={sheet.edit} save={save} onDelete={(row) => removeWithUndo('person' in row ? 'absences' : 'events', row)} onClose={closeSheet} />}
     </div>
   );

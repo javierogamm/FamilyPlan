@@ -1,32 +1,31 @@
 'use client';
 import { motion } from 'framer-motion';
-import { NO_SHOP, PEOPLE, SLOTS, person } from '@/lib/constants';
-import { longDate, weekDays } from '@/lib/dates';
+import { COOK_WHEN, COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
+import { longDate } from '@/lib/dates';
 import { absentOn, buzz, eventsOn, hhmm, mealAt } from '@/lib/helpers';
 import { personIcon } from '@/lib/icons';
-import { Avatar } from './ui';
 import { Pic } from './Pic';
+import { Segmented } from './ui';
 
 const CYCLE = [null, 'papa', 'mama'];
-/** Tarjeta de asignación: un toque rota Sin asignar → Viero → Sonia (Otros se elige en la hoja). */
-function AssignTile({ action, label, value, onChange }) {
-  const icon = value && value !== 'otros' ? personIcon(value, action) : null;
+/** Un toque rota Sin asignar → Viero → Sonia (Otros se elige en la hoja). */
+function AssignTile({ value, onChange }) {
+  const icon = value && value !== 'otros' ? personIcon(value, 'cocinar') : null;
   const next = () => { buzz(12); onChange(CYCLE[(CYCLE.indexOf(value) + 1) % CYCLE.length] ?? null); };
   return (
     <motion.button type="button" className={`assign${value ? ' set' : ''}`} whileTap={{ scale: 0.94 }} onClick={next}>
       <span className="as-pic">
         {icon ? <Pic key={value} icon={icon} size={84} /> : value === 'otros' ? <span className="as-emoji">🧑‍🍳</span> : <span className="as-empty">＋</span>}
       </span>
-      <span className="as-text"><small>{label}</small><b>{value ? person(value).label : 'Sin asignar'}</b></span>
+      <span className="as-text"><small>Cocina</small><b>{value ? person(value).label : 'Sin asignar'}</b></span>
     </motion.button>
   );
 }
 
 function MealCard({ date, slot, meal, openMeal, save }) {
   const filled = !!meal?.dish;
-  const needsBuy = filled && !NO_SHOP.has(meal.dish);
-  const toggleDone = () => { buzz(20); save('meals', { ...meal, done: !meal.done }); };
-  const toggleBuy = () => { buzz(15); save('meals', { ...meal, shopping_ok: !meal.shopping_ok }); };
+  const patch = (p) => save('meals', { ...meal, ...p });
+  const cw = meal?.cook_when || 'same';
   return (
     <div className={`meal-card${filled ? ' filled' : ' empty'}${meal?.done ? ' done' : ''}`}>
       <motion.button type="button" className="mc-main" whileTap={{ scale: 0.97 }} onClick={() => openMeal(date, slot.id)}>
@@ -37,6 +36,7 @@ function MealCard({ date, slot, meal, openMeal, save }) {
               {meal.emoji}
             </motion.span>
             <span className="mc-dish">{meal.dish}</span>
+            {cw !== 'same' && <span className="when-tag">{COOK_WHEN_TAG[cw]}</span>}
           </>
         ) : (
           <>
@@ -47,21 +47,24 @@ function MealCard({ date, slot, meal, openMeal, save }) {
       </motion.button>
       {filled && (
         <div className="assign-row">
-          <AssignTile action="cocinar" label="Cocina" value={meal.cook} onChange={(v) => save('meals', { ...meal, cook: v })} />
-          {needsBuy && <AssignTile action="comprar" label="Compra" value={meal.shopper} onChange={(v) => save('meals', { ...meal, shopper: v })} />}
+          <AssignTile value={meal.cook} onChange={(v) => patch({ cook: v })} />
+          <div className="when">
+            <small>¿Cuándo se cocina?</small>
+            <Segmented name={`cw-${date}-${slot.id}`} value={cw} onChange={(v) => patch({ cook_when: v })} options={COOK_WHEN} />
+          </div>
         </div>
       )}
       {filled && (
-        <div className={`toggle-row${needsBuy && !meal.done ? ' two' : ''}`}>
-          {needsBuy && !meal.done && (
-            <button type="button" className={`buy-toggle${meal.shopping_ok ? ' on' : ''}`} onClick={toggleBuy}>
-              <motion.span key={String(meal.shopping_ok)} initial={{ scale: 0.4 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }}>
-                {meal.shopping_ok ? '✅' : '🛒'}
+        <div className={`toggle-row${meal.done ? '' : ' two'}`}>
+          {!meal.done && (
+            <button type="button" className={`buy-toggle${meal.needs_buy ? ' warn' : ''}`} onClick={() => { buzz(15); patch({ needs_buy: !meal.needs_buy }); }}>
+              <motion.span key={String(!!meal.needs_buy)} initial={{ scale: 0.4 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }}>
+                {meal.needs_buy ? '🛒' : '👍'}
               </motion.span>
-              {meal.shopping_ok ? 'Hay compra' : 'Falta la compra'}
+              {meal.needs_buy ? 'Hay que comprar' : 'No hay que comprar'}
             </button>
           )}
-          <button type="button" className={`done-toggle${meal.done ? ' on' : ''}`} onClick={toggleDone}>
+          <button type="button" className={`done-toggle${meal.done ? ' on' : ''}`} onClick={() => { buzz(20); patch({ done: !meal.done }); }}>
             <motion.span key={String(!!meal.done)} initial={{ scale: 0.4, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }}>
               {meal.done ? '🍽️' : '⏳'}
             </motion.span>
@@ -73,14 +76,9 @@ function MealCard({ date, slot, meal, openMeal, save }) {
   );
 }
 
-export default function MealsView({ monday, date, data, openMeal, save }) {
+export default function MealsView({ date, data, openMeal, save }) {
   const away = absentOn(data.absences, date);
   const evs = eventsOn(data.events, date);
-  const pendingList = weekDays(monday).flatMap((d) =>
-    SLOTS.map((s) => ({ d, s, m: mealAt(data.meals, d, s.id) })).filter(({ m }) => m?.dish && !m.done && !NO_SHOP.has(m.dish) && !m.shopping_ok),
-  );
-  const groups = [...PEOPLE.map((p) => p.id), null].map((id) => ({ id, items: pendingList.filter((x) => (x.m.shopper || null) === id) })).filter((g) => g.items.length);
-
   return (
     <>
       <h2 className="day-title">{longDate(date)}</h2>
@@ -93,26 +91,6 @@ export default function MealsView({ monday, date, data, openMeal, save }) {
       <div className="cards">
         {SLOTS.map((s) => <MealCard key={s.id} date={date} slot={s} meal={mealAt(data.meals, date, s.id)} openMeal={openMeal} save={save} />)}
       </div>
-
-      <h3 className="section">🛒 Compra pendiente de la semana</h3>
-      {groups.length === 0 ? (
-        <p className="muted pad">Todo lo planificado tiene compra. 🎉</p>
-      ) : (
-        <div className="shop-groups">
-          {groups.map((g) => (
-            <div key={g.id ?? 'none'} className="shop-group">
-              <div className="sg-head">{g.id ? <>{g.id === 'otros' ? <Avatar id={g.id} size={30} /> : <Pic icon={personIcon(g.id, 'comprar')} size={40} animate={false} />} {person(g.id).label}</> : <>❔ Sin responsable</>}</div>
-              <div className="chips">
-                {g.items.map(({ d, s, m }) => (
-                  <button key={d + s.id} type="button" className="chip" onClick={() => openMeal(d, s.id)}>
-                    {m.emoji} {m.dish} <small>{d.slice(8)}/{d.slice(5, 7)} {s.icon}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DISH_EMOJIS, NO_SHOP, PRESET_DISHES, SLOTS } from '@/lib/constants';
+import { COOK_WHEN, DISH_EMOJIS, PRESET_DISHES, SLOTS } from '@/lib/constants';
 import { longDate } from '@/lib/dates';
 import { absentOn, buzz, mealAt, uid } from '@/lib/helpers';
 import Sheet from './Sheet';
-import { PersonPick, Switch } from './ui';
+import { PersonPick, Segmented, Switch } from './ui';
 
 export default function MealSheet({ open, date, slotId, data, save, remove, onClose }) {
   const slot = SLOTS.find((s) => s.id === slotId);
@@ -16,14 +16,14 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
   const [emoji, setEmoji] = useState(DISH_EMOJIS[0]);
 
   const patch = (p) =>
-    save('meals', { date, slot: slotId, dish: '', emoji: '🍽️', cook: null, shopper: null, shopping_ok: false, done: false, note: '', ...meal, ...p });
+    save('meals', { date, slot: slotId, dish: '', emoji: '🍽️', cook: null, needs_buy: false, cook_when: 'same', done: false, note: '', ...meal, ...p });
 
   const options = [...PRESET_DISHES];
   for (const d of data.dishes) if (!options.some((o) => o.name.toLowerCase() === d.name.toLowerCase())) options.push({ ...d, custom: true });
 
   const pick = (o) => {
     buzz(12);
-    patch({ dish: o.name, emoji: o.emoji, shopping_ok: NO_SHOP.has(o.name) ? true : meal?.dish === o.name ? meal.shopping_ok : false });
+    patch({ dish: o.name, emoji: o.emoji });
   };
   const addDish = (e) => {
     e.preventDefault();
@@ -39,7 +39,6 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
     setAdding(false);
   };
   const hasDish = !!meal?.dish;
-  const needsBuy = hasDish && !NO_SHOP.has(meal.dish);
 
   return (
     <Sheet
@@ -58,13 +57,9 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
           <Switch checked={!!meal.done} onChange={(v) => patch({ done: v })} label="Ya está hecha" hint="Para platos preparados con antelación" />
           <h3 className="label">👩‍🍳 ¿Quién cocina?</h3>
           <PersonPick action="cocinar" value={meal.cook} onChange={(v) => patch({ cook: v })} absent={absent} />
-          {needsBuy && (
-            <>
-              <h3 className="label">🛒 ¿Quién compra?</h3>
-              <PersonPick action="comprar" value={meal.shopper} onChange={(v) => patch({ shopper: v })} absent={absent} />
-              <Switch checked={!!meal.shopping_ok} onChange={(v) => patch({ shopping_ok: v })} label="Ya hay compra para este plato" hint="Márcalo cuando esté comprado" />
-            </>
-          )}
+          <h3 className="label">🗓️ ¿Cuándo se cocina?</h3>
+          <Segmented name="sheet-cw" value={meal.cook_when || 'same'} onChange={(v) => patch({ cook_when: v })} options={COOK_WHEN} />
+          <Switch checked={!!meal.needs_buy} onChange={(v) => patch({ needs_buy: v })} label="Hay que comprar" hint="Genera un aviso hasta que lo desmarques" />
           <h3 className="label">📝 Nota</h3>
           <input className="field" defaultValue={meal.note} onBlur={(e) => e.target.value !== meal.note && patch({ note: e.target.value })} placeholder="Ej.: sin gluten, descongelar…" maxLength={200} />
         </motion.div>

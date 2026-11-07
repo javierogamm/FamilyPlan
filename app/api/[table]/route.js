@@ -7,7 +7,7 @@ const SCHEMA = {
   meals: {
     conflict: 'household_id,date,slot',
     required: ['date', 'slot'],
-    fields: { date: 'date', slot: ['comida', 'cena'], dish: 's60', emoji: 's8', cook: [...PEOPLE, null], shopper: [...PEOPLE, null], shopping_ok: 'bool', done: 'bool', note: 's200' },
+    fields: { date: 'date', slot: ['comida', 'cena'], dish: 's60', emoji: 's8', cook: [...PEOPLE, null], shopper: [...PEOPLE, null], shopping_ok: 'bool', done: 'bool', needs_buy: 'bool', cook_when: ['same', 'eve', 'weekend'], note: 's200' },
   },
   absences: {
     required: ['id', 'person', 'start_date', 'end_date'],
@@ -16,6 +16,10 @@ const SCHEMA = {
   events: {
     required: ['id', 'date', 'title', 'kind'],
     fields: { id: 'uuid', date: 'date', time: 'time', title: 's80', kind: ['evento', 'extraescolar'], who: 's60', repeat: ['none', 'weekly'], emoji: 's8', needs_transport: 'bool', transport: ['papa', 'mama', null], activity: 's20' },
+  },
+  shopping: {
+    required: ['id', 'store'],
+    fields: { id: 'uuid', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], items: 's200', shopper: [...PEOPLE, null], date: 'date?', done: 'bool' },
   },
   dishes: {
     required: ['id', 'name'],
@@ -35,6 +39,10 @@ function check(rule, v, name) {
   if (rule === 'date') {
     if (typeof v !== 'string' || !DATE.test(v) || Number.isNaN(Date.parse(v))) throw bad();
     return v;
+  }
+  if (rule === 'date?') {
+    if (v == null || v === '') return null;
+    return check('date', v, name);
   }
   if (rule === 'time') {
     if (v == null || v === '') return null;
