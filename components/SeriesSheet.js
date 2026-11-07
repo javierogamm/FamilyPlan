@@ -78,7 +78,7 @@ export default function SeriesSheet({ open, today, edit, saveMany, removeSeries,
       <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej.: Karate" maxLength={80} />
       <h3 className="label">Días de la semana</h3>
       <div className="day-pick">
-        {DAY_SHORT.map((l, i) => <button key={l} type="button" className={days.includes(i + 1) ? 'on' : ''} onClick={() => toggleDay(i + 1)}>{l}</button>)}
+        {DAY_SHORT.map((l, i) => <button key={l} type="button" className={days.includes((i + 1) % 7) ? 'on' : ''} onClick={() => toggleDay((i + 1) % 7)}>{l}</button>)}
       </div>
       <div className="two">
         <label><h3 className="label">Hora</h3><input type="time" className="field" value={time} onChange={(e) => setTime(e.target.value)} /></label>

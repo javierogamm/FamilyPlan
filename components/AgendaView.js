@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { person } from '@/lib/constants';
-import { dayNum, weekDays, weekdayName } from '@/lib/dates';
+import { dayNum, isWeekend, weekDays, weekdayName } from '@/lib/dates';
 import { absLabel, absenceAt, buzz, eventsOn, hhmm, mealName } from '@/lib/helpers';
 import { absenceIcon, eventIcons, personIcon } from '@/lib/icons';
 import { agendaTasks } from '@/lib/tasks';
@@ -33,7 +33,7 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
           const tasks = agendaTasks(data, d, today).filter((t) => !mine || !t.person || t.person === me);
           const empty = !evs.length && !abs.length && !tasks.length;
           return (
-            <section key={d} className={`ag-day${d === today ? ' today' : ''}${d === selected ? ' sel' : ''}`}>
+            <section key={d} className={`ag-day${d === today ? ' today' : ''}${d === selected ? ' sel' : ''}${isWeekend(d) ? ' weekend' : ''}`}>
               <div className="ag-head">
                 <span className="ag-num">{dayNum(d)}</span>
                 <span className="ag-name">{weekdayName(d)}</span>

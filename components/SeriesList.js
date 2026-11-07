@@ -21,7 +21,7 @@ export default function SeriesList({ open, today, events, onNew, onEdit, onDelet
                 {icons.length ? <PicStack icons={icons} size={52} /> : <span className="ag-ico">{e.emoji}</span>}
                 <span className="ag-main">
                   <b>{e.title}</b>
-                  <small>{g.days.map((d) => DAY_SHORT[d - 1]).join(' · ')}{e.time ? ` · ${hhmm(e.time)}` : ''} · {e.location === 'school' ? '🏫 Cole' : '📍 Fuera'}</small>
+                  <small>{g.days.map((d) => DAY_SHORT[(d + 6) % 7]).join(' · ')}{e.time ? ` · ${hhmm(e.time)}` : ''} · {e.location === 'school' ? '🏫 Cole' : '📍 Fuera'}</small>
                   <small>{e.who || 'Sin niños'} · {g.upcoming.length} próximos</small>
                 </span>
                 {e.needs_transport && (e.transport ? <Pic icon={personIcon(e.transport, 'transporte')} size={44} animate={false} /> : <span className="tr-empty small">🛵<b>?</b></span>)}

@@ -428,3 +428,35 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .credit { font-size: 12.5px; font-weight: 700; color: var(--amber); }
 .sug-chip { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 35%, transparent); color: var(--amber); white-space: nowrap; }
 .meal-row.suggested .mr-dish { font-style: italic; color: var(--muted); }
+
+/* ---------- Fines de semana y resumen ---------- */
+:root { --wk: #ebe6ff; --wk-line: #cfc6ff; --wk-ink: #6b52d9; }
+@media (prefers-color-scheme: dark) { :root { --wk: #2b2542; --wk-line: #4a4075; --wk-ink: #b4a4ff; } }
+.days { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.day { min-height: 62px; border-radius: 16px; } .day .dn { font-size: 18px; }
+.day.weekend:not(.sel) { background: var(--wk); } .day.weekend:not(.sel) .dl { color: var(--wk-ink); }
+.day-pick { grid-template-columns: repeat(7, 1fr); gap: 5px; } .day-pick button { font-size: 15px; }
+.day-card.weekend { background: var(--wk); border-color: transparent; }
+.day-card.weekend.today { border-color: color-mix(in srgb, var(--primary) 55%, transparent); }
+.day-card.weekend .dc-name { color: var(--wk-ink); }
+.ag-day.weekend { background: var(--wk); } .ag-day.weekend .ag-name { color: var(--wk-ink); }
+.wk-chip { white-space: nowrap; margin-left: 10px; font-style: normal; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 10px; background: var(--wk); color: var(--wk-ink); vertical-align: middle; }
+
+.history { display: grid; gap: 12px; }
+.hist-week { display: grid; gap: 10px; }
+.hist-day { padding: 10px; border-radius: 20px; background: var(--card); box-shadow: var(--shadow-sm); display: grid; gap: 6px; }
+.hist-day.weekend { background: var(--wk); } .hist-day.today { box-shadow: 0 0 0 2px var(--primary); }
+.hist-day h4 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; } .hist-day h4 span { font-size: 22px; }
+.hist-meal { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px; border-radius: 14px; background: color-mix(in srgb, var(--card) 70%, transparent); text-align: left; }
+.hist-meal.suggested { opacity: .8; font-style: italic; }
+.hm-names { flex: 1; display: grid; gap: 1px; font-weight: 700; min-width: 0; } .hm-names i { font-style: normal; }
+.rank-grid { display: grid; gap: 12px; }
+.rank { background: var(--card); border-radius: 20px; padding: 12px; box-shadow: var(--shadow-sm); display: grid; gap: 8px; }
+.rank h3 { margin: 0; font-size: 17px; } .rank h3 small { color: var(--muted); font-weight: 600; margin-left: 6px; }
+.rank-row { display: flex; align-items: center; gap: 8px; }
+.rk-pos { width: 20px; text-align: center; color: var(--muted); font-weight: 800; font-size: 13px; } .rk-emoji { font-size: 24px; }
+.rk-main { flex: 1; display: grid; gap: 3px; min-width: 0; } .rk-main b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-bar { height: 7px; border-radius: 4px; background: var(--soft); overflow: hidden; } .rk-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--primary-2)); }
+.rk-n { font-weight: 800; min-width: 34px; text-align: right; }
+@media (min-width: 760px) { .rank-grid { grid-template-columns: 1fr 1fr; align-items: start; } .hist-week { grid-template-columns: 1fr 1fr; align-items: start; } }
+@media (min-width: 1100px) { .days { max-width: 860px; } .day { min-height: 76px; } .hist-week { grid-template-columns: repeat(3, 1fr); } }

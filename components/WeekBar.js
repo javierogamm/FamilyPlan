@@ -1,13 +1,13 @@
 'use client';
 import { AnimatePresence, motion } from 'framer-motion';
-import { DAY_SHORT, dayNum, mondayOf, startDay, weekDays, weekTitle } from '@/lib/dates';
+import { DAY_SHORT, dayNum, isWeekend, mondayOf, weekDays, weekTitle } from '@/lib/dates';
 import { absentOn, eventsOn } from '@/lib/helpers';
 import { personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 
 export default function WeekBar({ me, onMe, monday, selected, today, showDays, data, onSelect, onShift, onToday }) {
   const { title, range } = weekTitle(monday);
-  const isThisWeek = mondayOf(startDay(today)) === monday;
+  const isThisWeek = mondayOf(today) === monday;
   return (
     <header className="weekbar">
       <div className="wb-top">
@@ -35,7 +35,7 @@ export default function WeekBar({ me, onMe, monday, selected, today, showDays, d
             const away = absentOn(data.absences, d);
             const hasEv = eventsOn(data.events, d).length > 0;
             return (
-              <button key={d} type="button" role="tab" aria-selected={sel} className={`day${sel ? ' sel' : ''}${d === today ? ' today' : ''}`} onClick={() => onSelect(d)}>
+              <button key={d} type="button" role="tab" aria-selected={sel} className={`day${sel ? ' sel' : ''}${d === today ? ' today' : ''}${isWeekend(d) ? ' weekend' : ''}`} onClick={() => onSelect(d)}>
                 {sel && <motion.span layoutId="daypill" className="day-pill" transition={{ type: 'spring', stiffness: 450, damping: 34 }} />}
                 <span className="dl">{DAY_SHORT[i]}</span>
                 <span className="dn">{dayNum(d)}</span>
