@@ -50,6 +50,8 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const [sheet, setSheet] = useState(null);
   const [mealsMode, setMealsMode] = useState('day');
   const [listId, setListId] = useState('main');
+  const [comprasView, setComprasView] = useState('lista');
+  const openList = (id) => { setListId(id || 'main'); setComprasView('lista'); setTab('compras'); };
   const counter = useRef(0);
   const [dismissed, setDismissed] = useState(() => load('fp_dismissed', []));
   const [notif, setNotif] = useState('unsupported');
@@ -127,6 +129,9 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
     setMonday(mondayOf(gd));
     setSelected(gd);
     setTab(a.go.tab);
+    if (a.go.tab === 'compras') {
+      if (a.go.list) { setListId(a.go.list); setComprasView('lista'); } else setComprasView(a.go.view || 'tareas');
+    }
     if (a.go.slot) openMeal(a.go.date, a.go.slot);
   };
   const enableNotif = async () => {
@@ -178,9 +183,9 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
               </>
             )}
             {tab === 'agenda' && (
-              <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
+              <AgendaView save={save} me={me} openList={openList} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
-            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} listId={listId} setListId={setListId} openListSheet={(l) => open({ kind: 'list', edit: l || null })} removeWithUndo={removeWithUndo} />}
+            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} listId={listId} setListId={setListId} view={comprasView} setView={setComprasView} openListSheet={(l) => open({ kind: 'list', edit: l || null })} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
               <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={() => open({ kind: 'who' })} />
             )}

@@ -494,3 +494,5 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .list-edit { display: block; margin: 0 0 4px; min-height: 36px; }
 .assoc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 6px; font-size: 13.5px; color: var(--muted); } .assoc b { padding: 3px 10px; border-radius: 12px; background: color-mix(in srgb, var(--buy, #1f9fb0) 16%, var(--card)); color: var(--ink); }
 .list-link { margin-top: 4px; justify-self: start; padding: 3px 10px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 12%, var(--card)); color: var(--primary); font-weight: 800; font-size: 12.5px; }
+
+.task-edit { width: 40px; height: 40px; border-radius: 50%; flex: none; background: color-mix(in srgb, var(--ink) 7%, transparent); font-size: 16px; }

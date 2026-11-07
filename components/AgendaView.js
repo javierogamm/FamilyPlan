@@ -11,7 +11,7 @@ import SwipeRow from './SwipeRow';
 
 const CYCLE = [null, 'papa', 'mama'];
 
-export default function AgendaView({ save, monday, today, selected, data, me, openMeal, openShop, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
+export default function AgendaView({ save, monday, today, selected, data, me, openMeal, openShop, openList, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
   const [mine, setMine] = useState(false);
   const cycleTransport = (e) => {
     buzz(12);
@@ -45,7 +45,7 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                   {tasks.map((t) => {
                     const icon = t.person && t.person !== 'otros' ? personIcon(t.person, t.type === 'cook' ? 'cocinar' : 'comprar') : null;
                     const bad = t.person && t.person !== 'otros' && !t.done ? absenceAt(data.absences, t.person, d, null) : null;
-                    const open = () => (t.type === 'cook' ? openMeal(t.meal.date, t.meal.slot) : t.type === 'buy' ? openShop({ edit: t.task }) : openShop({ prefill: { items: mealName(t.meal), date: d } }));
+                    const open = () => (t.type === 'cook' ? openMeal(t.meal.date, t.meal.slot) : t.type === 'buy' ? (t.task.list_id ? openList(t.task.list_id) : openShop({ edit: t.task })) : openShop({ prefill: { items: mealName(t.meal), date: d } }));
                     const toggle = () => {
                       buzz(18);
                       if (t.type === 'cook') save('meals', { ...t.meal, done: !t.meal.done });
@@ -70,6 +70,7 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                             {bad && <small className="conf-text">🚨 {person(t.person).label} está {absLabel(bad, d)}</small>}
                           </span>
                         </button>
+                        {t.type === 'buy' && t.task.list_id && <button type="button" className="task-edit" aria-label="Editar la compra" onClick={() => openShop({ edit: t.task })}>✏️</button>}
                         <button type="button" className={`tr-btn${t.person ? ' set' : ''}${bad ? ' conflict' : ''}`} aria-label="Asignar responsable" onClick={assign}>
                           {icon ? <Pic key={t.person} icon={icon} size={52} /> : t.person === 'otros' ? <span className="as-emoji">🧑‍🍳</span> : <span className="tr-empty">{t.type === 'cook' ? '🍳' : '🛒'}<b>?</b></span>}
                         </button>
