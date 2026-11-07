@@ -2,8 +2,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { DAY_SHORT, dayNum, mondayOf, startDay, weekDays, weekTitle } from '@/lib/dates';
 import { absentOn, eventsOn } from '@/lib/helpers';
+import { personIcon } from '@/lib/icons';
+import { Pic } from './Pic';
 
-export default function WeekBar({ monday, selected, today, showDays, data, onSelect, onShift, onToday }) {
+export default function WeekBar({ me, onMe, monday, selected, today, showDays, data, onSelect, onShift, onToday }) {
   const { title, range } = weekTitle(monday);
   const isThisWeek = mondayOf(startDay(today)) === monday;
   return (
@@ -14,6 +16,7 @@ export default function WeekBar({ monday, selected, today, showDays, data, onSel
           <p>Semana {range}</p>
         </div>
         <div className="wb-actions">
+          {me && <button type="button" className="me-btn" aria-label="Cambiar de persona" onClick={onMe}><Pic icon={personIcon(me)} size={40} animate={false} ring /></button>}
           <AnimatePresence>
             {!isThisWeek && (
               <motion.button key="today" type="button" className="chip-btn" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} onClick={onToday}>

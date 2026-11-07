@@ -12,6 +12,9 @@ import AgendaView from './AgendaView';
 import AlertsView from './AlertsView';
 import ComprasView from './ComprasView';
 import ShopSheet from './ShopSheet';
+import SeriesSheet from './SeriesSheet';
+import SeriesList from './SeriesList';
+import WhoSheet from './WhoSheet';
 import MealSheet from './MealSheet';
 import AddSheet from './AddSheet';
 import Swipe from './Swipe';
@@ -31,11 +34,11 @@ function persist(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-export default function Shell({ code, onLogout }) {
+export default function Shell({ code, me, onChangeMe, onLogout }) {
   const [today, setToday] = useState(todayISO);
   const [toast, setToast] = useState(null);
   const showToast = useCallback((t) => setToast({ ...t, n: Date.now() }), []);
-  const { data, ready, save, remove } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
+  const { data, ready, save, saveMany, remove, removeSeries } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
 
   const [tab, setTab] = useState('semana');
   const [monday, setMonday] = useState(() => mondayOf(startDay(todayISO())));
@@ -95,7 +98,14 @@ export default function Shell({ code, onLogout }) {
   const closeSheet = useCallback(() => setSheet((s) => s && { ...s, open: false }), []);
   const openMeal = (date, slotId) => open({ kind: 'meal', date, slotId });
   const openShop = (o = {}) => open({ kind: 'shop', ...o });
-  const openAdd = (date, edit = null) => open({ kind: 'add', date, edit });
+  const openAdd = (date, edit = null, preset = null) => open({ kind: 'add', date, edit, preset });
+  const openSeries = () => open({ kind: 'series' });
+  const openSeriesForm = (edit = null) => open({ kind: 'seriesForm', edit });
+  const deleteSeries = (g) => {
+    const gone = g.upcoming;
+    removeSeries(g.id, today);
+    showToast({ msg: `Extraescolar borrada (${gone.length} eventos)`, undo: () => saveMany('events', gone) });
+  };
 
   const removeWithUndo = (table, row) => {
     remove(table, row);
@@ -136,7 +146,7 @@ export default function Shell({ code, onLogout }) {
     <div className="app">
       <div className="blobs" aria-hidden><i /><i /><i /></div>
       {tab !== 'avisos' && tab !== 'compras' && (
-        <WeekBar monday={monday} selected={selected} today={today} showDays={tab !== 'semana'} data={data} onSelect={selectDay} onShift={shiftWeek} onToday={goToday} />
+        <WeekBar me={me} onMe={() => open({ kind: 'who' })} monday={monday} selected={selected} today={today} showDays={tab !== 'semana'} data={data} onSelect={selectDay} onShift={shiftWeek} onToday={goToday} />
       )}
       <main className="main">
         {!ready ? (
@@ -154,11 +164,11 @@ export default function Shell({ code, onLogout }) {
               </Swipe>
             )}
             {tab === 'agenda' && (
-              <AgendaView save={save} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={(d) => openAdd(d)} removeWithUndo={removeWithUndo} />
+              <AgendaView save={save} me={me} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
             {tab === 'compras' && <ComprasView today={today} data={data} save={save} openShop={openShop} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
-              <AlertsView alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={onLogout} />
+              <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={onLogout} />
             )}
           </>
         )}
@@ -195,8 +205,11 @@ export default function Shell({ code, onLogout }) {
       </AnimatePresence>
 
       {sheet?.kind === 'meal' && <MealSheet key={sheet.n} open={sheet.open} date={sheet.date} slotId={sheet.slotId} data={data} save={save} remove={removeWithUndo} onClose={closeSheet} />}
+      {sheet?.kind === 'who' && <WhoSheet key={sheet.n} open={sheet.open} me={me} onPick={onChangeMe} onClose={closeSheet} />}
+      {sheet?.kind === 'series' && <SeriesList key={sheet.n} open={sheet.open} today={today} events={data.events} onNew={() => openSeriesForm()} onEdit={(g) => openSeriesForm(g)} onDelete={deleteSeries} onClose={closeSheet} />}
+      {sheet?.kind === 'seriesForm' && <SeriesSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} saveMany={saveMany} removeSeries={removeSeries} onClose={closeSheet} />}
       {sheet?.kind === 'shop' && <ShopSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} store={sheet.store} prefill={sheet.prefill} save={save} onDelete={(row) => removeWithUndo('shopping', row)} onClose={closeSheet} />}
-      {sheet?.kind === 'add' && <AddSheet key={sheet.n} open={sheet.open} date={sheet.date} edit={sheet.edit} save={save} onDelete={(row) => removeWithUndo('person' in row ? 'absences' : 'events', row)} onClose={closeSheet} />}
+      {sheet?.kind === 'add' && <AddSheet key={sheet.n} open={sheet.open} date={sheet.date} edit={sheet.edit} preset={sheet.preset} me={me} save={save} onDelete={(row) => removeWithUndo('person' in row ? 'absences' : 'events', row)} onClose={closeSheet} />}
     </div>
   );
 }
