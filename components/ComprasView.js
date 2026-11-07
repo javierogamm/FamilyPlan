@@ -7,6 +7,8 @@ import { buzz, isPlanned, mealEmoji, mealName } from '@/lib/helpers';
 import { personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 import SwipeRow from './SwipeRow';
+import ListaView from './ListaView';
+import { Segmented } from './ui';
 
 const CYCLE = [null, 'papa', 'mama'];
 
@@ -20,8 +22,10 @@ function dateTag(d, today) {
   return { text: `${weekdayName(d)} ${dm}`, late: false };
 }
 
-export default function ComprasView({ today, data, save, openShop, removeWithUndo }) {
+export default function ComprasView({ today, data, me, save, saveMany, removeChecked, toast, openShop, removeWithUndo }) {
   const [showDone, setShowDone] = useState(false);
+  const [view, setView] = useState('lista');
+  const seg = <Segmented name="compras-view" value={view} onChange={setView} options={[{ value: 'lista', label: '🧾 Lista de la compra' }, { value: 'tareas', label: '🗓️ Compras' }]} />;
   const pending = data.shopping.filter((t) => !t.done).sort((a, b) => (a.date || '9').localeCompare(b.date || '9'));
   const done = data.shopping.filter((t) => t.done).sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 15);
   const needs = data.meals
@@ -50,9 +54,20 @@ export default function ComprasView({ today, data, save, openShop, removeWithUnd
     );
   };
 
+  if (view === 'lista') {
+    return (
+      <div className="compras">
+        <h1 className="page-title">Compras</h1>
+        {seg}
+        <ListaView today={today} data={data} me={me} save={save} saveMany={saveMany} remove={removeWithUndo} removeChecked={removeChecked} toast={toast} />
+      </div>
+    );
+  }
+
   return (
     <div className="compras">
       <h1 className="page-title">Compras</h1>
+      {seg}
 
       <div className="store-grid">
         {STORES.map((s) => (
