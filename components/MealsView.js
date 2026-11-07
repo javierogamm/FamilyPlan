@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { COOK_WHEN, COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
-import { longDate } from '@/lib/dates';
+import { isWeekend, longDate } from '@/lib/dates';
 import { absLabel, awayList, buzz, eventsOn, hhmm, hasDishes, isSuggested, mealAt } from '@/lib/helpers';
 import { absenceIcon, personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
@@ -96,7 +96,7 @@ export default function MealsView({ date, data, me, openMeal, save, remove }) {
   const evs = eventsOn(data.events, date);
   return (
     <>
-      <h2 className="day-title">{longDate(date)}</h2>
+      <h2 className="day-title">{longDate(date)}{isWeekend(date) && <em className="wk-chip">Finde</em>}</h2>
       {(away.length > 0 || evs.length > 0) && (
         <div className="banner-row">
           {away.map((a) => <span key={a.id} className={`away-chip aw-${a.person}`}><Pic icon={absenceIcon(a)} size={32} animate={false} />{person(a.person).label} {absLabel(a, date)}</span>)}

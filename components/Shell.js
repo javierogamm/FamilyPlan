@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { addDays, diffDays, isWeekend, mondayOf, startDay, todayISO } from '@/lib/dates';
+import { addDays, diffDays, mondayOf, startDay, todayISO } from '@/lib/dates';
 import { computeAlerts } from '@/lib/alerts';
 import { buzz } from '@/lib/helpers';
 import { useFamily } from '@/lib/store';
@@ -9,6 +9,8 @@ import WeekBar from './WeekBar';
 import WeekView from './WeekView';
 import MealsView from './MealsView';
 import AgendaView from './AgendaView';
+import HistoryView from './HistoryView';
+import { Segmented } from './ui';
 import AlertsView from './AlertsView';
 import ComprasView from './ComprasView';
 import ShopSheet from './ShopSheet';
@@ -45,6 +47,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const [selected, setSelected] = useState(() => startDay(todayISO()));
   const [dir, setDir] = useState(1);
   const [sheet, setSheet] = useState(null);
+  const [mealsMode, setMealsMode] = useState('day');
   const counter = useRef(0);
   const [dismissed, setDismissed] = useState(() => load('fp_dismissed', []));
   const [notif, setNotif] = useState('unsupported');
@@ -82,8 +85,8 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   }, []);
   const shiftDay = (delta) => {
     const i = diffDays(selected, monday) + delta;
-    if (i > 4) { setDir(1); setMonday(addDays(monday, 7)); setSelected(addDays(monday, 7)); }
-    else if (i < 0) { setDir(-1); setMonday(addDays(monday, -7)); setSelected(addDays(monday, -3)); }
+    if (i > 6) { setDir(1); setMonday(addDays(monday, 7)); setSelected(addDays(monday, 7)); }
+    else if (i < 0) { setDir(-1); setMonday(addDays(monday, -7)); setSelected(addDays(monday, -1)); }
     else { setDir(delta); setSelected(addDays(monday, i)); }
   };
   const selectDay = (d) => { setDir(d > selected ? 1 : -1); setSelected(d); };
@@ -120,7 +123,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const goAlert = (a) => {
     const gd = a.go.date;
     setMonday(mondayOf(gd));
-    setSelected(isWeekend(gd) ? addDays(mondayOf(gd), 4) : gd);
+    setSelected(gd);
     setTab(a.go.tab);
     if (a.go.slot) openMeal(a.go.date, a.go.slot);
   };
@@ -132,7 +135,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
 
   // Teclado (PC): ← → cambian de día (Comidas) o de semana (resto).
   const keyNav = useRef();
-  keyNav.current = (delta) => (tab === 'comidas' ? shiftDay(delta) : shiftWeek(delta));
+  keyNav.current = (delta) => (tab === 'comidas' && mealsMode === 'day' ? shiftDay(delta) : shiftWeek(delta));
   useEffect(() => {
     const onKey = (e) => {
       if (sheet?.open || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -148,7 +151,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
     <div className="app">
       <div className="blobs" aria-hidden><i /><i /><i /></div>
       {tab !== 'avisos' && tab !== 'compras' && (
-        <WeekBar me={me} onMe={() => open({ kind: 'who' })} monday={monday} selected={selected} today={today} showDays={tab !== 'semana'} data={data} onSelect={selectDay} onShift={shiftWeek} onToday={goToday} />
+        <WeekBar me={me} onMe={() => open({ kind: 'who' })} monday={monday} selected={selected} today={today} showDays={(tab === 'comidas' && mealsMode === 'day') || tab === 'agenda'} data={data} onSelect={selectDay} onShift={shiftWeek} onToday={goToday} />
       )}
       <main className="main">
         {!ready ? (
@@ -161,9 +164,16 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
               </Swipe>
             )}
             {tab === 'comidas' && (
-              <Swipe id={`d-${selected}`} dir={dir} onSwipe={shiftDay}>
-                <MealsView date={selected} data={data} me={me} openMeal={openMeal} save={save} remove={removeWithUndo} />
-              </Swipe>
+              <>
+                <Segmented name="meals-mode" value={mealsMode} onChange={setMealsMode} options={[{ value: 'day', label: '📅 Por día' }, { value: 'history', label: '🍴 ¿Qué hemos comido?' }]} />
+                {mealsMode === 'day' ? (
+                  <Swipe id={`d-${selected}`} dir={dir} onSwipe={shiftDay}>
+                    <MealsView date={selected} data={data} me={me} openMeal={openMeal} save={save} remove={removeWithUndo} />
+                  </Swipe>
+                ) : (
+                  <HistoryView monday={monday} today={today} data={data} openMeal={openMeal} />
+                )}
+              </>
             )}
             {tab === 'agenda' && (
               <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />

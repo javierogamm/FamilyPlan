@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
-import { dayNum, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
+import { dayNum, isWeekend, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
 import { absLabel, absenceAt, awayList, eventsOn, hhmm, hasDishes, isPlanned, isSuggested, mealAt, mealEmoji, mealName } from '@/lib/helpers';
 import { absenceIcon, personIcon, eventIcons } from '@/lib/icons';
 import { Pic, PicStack } from './Pic';
@@ -40,7 +40,7 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
           const away = awayList(data.absences, d);
           const evs = eventsOn(data.events, d);
           return (
-            <motion.section key={d} variants={item} className={`day-card${d === today ? ' today' : ''}`}>
+            <motion.section key={d} variants={item} className={`day-card${d === today ? ' today' : ''}${isWeekend(d) ? ' weekend' : ''}`}>
               <button type="button" className="dc-head" onClick={() => goDay(d)}>
                 <span className="dc-num">{dayNum(d)}</span>
                 <span className="dc-name">{weekdayName(d)}</span>
