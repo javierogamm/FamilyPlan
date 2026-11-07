@@ -1,8 +1,8 @@
 'use client';
 import { motion } from 'framer-motion';
-import { COOK_WHEN_TAG, SLOTS } from '@/lib/constants';
+import { COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
 import { dayNum, relativeLabel, weekDays, weekdayName } from '@/lib/dates';
-import { absLabel, absenceAt, awayList, eventsOn, hhmm, isPlanned, mealAt, mealEmoji, mealName } from '@/lib/helpers';
+import { absLabel, absenceAt, awayList, eventsOn, hhmm, hasDishes, isPlanned, isSuggested, mealAt, mealEmoji, mealName } from '@/lib/helpers';
 import { absenceIcon, personIcon, eventIcons } from '@/lib/icons';
 import { Pic, PicStack } from './Pic';
 
@@ -54,10 +54,11 @@ export default function WeekView({ monday, today, data, openMeal, openEvent, goD
                 const m = mealAt(data.meals, d, s.id);
                 const buy = isPlanned(m) && !m.done && m.needs_buy;
                 return (
-                  <button key={s.id} type="button" className={`meal-row${isPlanned(m) ? '' : ' empty'}${m?.done ? ' done' : ''}`} onClick={() => openMeal(d, s.id)}>
+                  <button key={s.id} type="button" className={`meal-row${hasDishes(m) ? '' : ' empty'}${m?.done ? ' done' : ''}${isSuggested(m) ? ' suggested' : ''}`} onClick={() => openMeal(d, s.id)}>
                     <span className="slot-ico" title={s.label}>{s.icon}</span>
-                    <span className="mr-emoji">{isPlanned(m) ? mealEmoji(m) : '＋'}</span>
-                    <span className="mr-dish">{isPlanned(m) ? mealName(m) : 'Sin planificar'}</span>
+                    <span className="mr-emoji">{hasDishes(m) ? mealEmoji(m) : '＋'}</span>
+                    <span className="mr-dish">{hasDishes(m) ? mealName(m) : 'Sin planificar'}</span>
+                    {isSuggested(m) && <span className="sug-chip">💡 {person(m.suggested_by)?.label || 'Sugerido'}</span>}
                     {m?.done && <span className="done-chip">✓ Hecha</span>}
                     {m?.cook && <Pic icon={personIcon(m.cook === 'otros' ? null : m.cook, 'cocinar')} size={40} animate={false} className="row-pic" />}
                     {isPlanned(m) && !m.done && m.cook_when && m.cook_when !== 'same' && <span className="when-ico" title={COOK_WHEN_TAG[m.cook_when]}>{m.cook_when === 'eve' ? '🌙' : '📅'}</span>}
