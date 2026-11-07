@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { COOK_WHEN, DISH_EMOJIS, SLOTS } from '@/lib/constants';
 import { CATEGORIES, DISHES, norm, searchDishes } from '@/lib/dishes';
 import { longDate } from '@/lib/dates';
-import { absentOn, buzz, isPlanned, mealAt, uid } from '@/lib/helpers';
+import { PARENTS, person } from '@/lib/constants';
+import { absentOn, buzz, isPlanned, isSuggested, hasDishes, mealAt, uid } from '@/lib/helpers';
 import Sheet from './Sheet';
 import { PersonPick, Segmented, Switch } from './ui';
 
@@ -12,7 +13,7 @@ const PAGE = 45;
 const TABS = [{ value: 'dishes', label: '🍽️ Platos' }, { value: 'details', label: '👩‍🍳 Cocina y compra' }];
 const COURSE_DB = { p: 'primero', s: 'segundo', b: 'both' };
 
-export default function MealSheet({ open, date, slotId, data, save, remove, onClose }) {
+export default function MealSheet({ open, date, slotId, me, data, save, remove, onClose }) {
   const slot = SLOTS.find((s) => s.id === slotId);
   const meal = mealAt(data.meals, date, slotId);
   const absent = absentOn(data.absences, date);
@@ -26,9 +27,11 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
   const [adding, setAdding] = useState(false);
   const [emoji, setEmoji] = useState(DISH_EMOJIS[0]);
   const [newCourse, setNewCourse] = useState('b');
+  const [suggest, setSuggest] = useState(!!meal?.suggested);
+  const parent = PARENTS.some((p) => p.id === me) ? me : null;
 
   const patch = (p) =>
-    save('meals', { date, slot: slotId, dish: '', emoji: '🍽️', dish2: '', emoji2: '🍽️', cook: null, needs_buy: false, cook_when: 'same', done: false, note: '', ...meal, ...p });
+    save('meals', { date, slot: slotId, dish: '', emoji: '🍽️', dish2: '', emoji2: '🍽️', cook: null, needs_buy: false, cook_when: 'same', done: false, suggested: false, suggested_by: null, note: '', ...meal, ...p });
   const field = course === 'p' ? { name: 'dish', emoji: 'emoji' } : { name: 'dish2', emoji: 'emoji2' };
   const current = meal?.[field.name] || '';
 
@@ -59,7 +62,7 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
 
   const pick = (d) => {
     buzz(12);
-    patch({ [field.name]: d.name, [field.emoji]: d.emoji });
+    patch({ [field.name]: d.name, [field.emoji]: d.emoji, ...(suggest ? { suggested: true, suggested_by: meal?.suggested_by || parent } : {}) });
     if (course === 'p' && !meal?.dish2) { setCourse('s'); setQuery(''); setCat(''); setLimit(PAGE); }
   };
   const clear = (c) => { buzz(); patch(c === 'p' ? { dish: '', emoji: '🍽️' } : { dish2: '', emoji2: '🍽️' }); };
@@ -97,10 +100,20 @@ export default function MealSheet({ open, date, slotId, data, save, remove, onCl
         {courseCard('p', meal?.dish, meal?.emoji)}
         {courseCard('s', meal?.dish2, meal?.emoji2)}
       </div>
+      {isSuggested(meal) && (
+        <div className="suggest-box in-sheet">
+          <span><small>💡 Sugerencia de {meal.suggested_by ? person(meal.suggested_by).label : 'alguien'}</small><b>Pendiente de aceptar</b></span>
+          <button type="button" className="btn primary sm" onClick={() => { buzz(20); setSuggest(false); patch({ suggested: false }); }}>✅ Aceptar</button>
+          <button type="button" className="btn ghost danger sm" onClick={() => { remove('meals', meal); onClose(); }}>✖</button>
+        </div>
+      )}
       <Segmented name="meal-tab" value={tab} onChange={setTab} options={TABS} />
 
       {tab === 'dishes' && (
         <>
+          {!isSuggested(meal) && (
+            <Switch checked={suggest} onChange={(v) => { setSuggest(v); if (hasDishes(meal)) patch(v ? { suggested: true, suggested_by: parent } : { suggested: false }); }} label="💡 Solo sugerir" hint="La otra persona tiene que aceptarla" />
+          )}
           <div className="search-row">
             <input className="field" type="search" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} placeholder={`Buscar ${course === 'p' ? 'primero' : 'segundo'} (${DISHES.length}+ platos)…`} enterKeyHint="search" />
             <button type="button" className="round" aria-label="Ideas nuevas" title="Ideas nuevas" onClick={() => { buzz(); setSeed((s) => s + 1); }}>🎲</button>

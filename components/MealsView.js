@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { COOK_WHEN, COOK_WHEN_TAG, SLOTS, person } from '@/lib/constants';
 import { longDate } from '@/lib/dates';
-import { absLabel, awayList, buzz, eventsOn, hhmm, isPlanned, mealAt } from '@/lib/helpers';
+import { absLabel, awayList, buzz, eventsOn, hhmm, hasDishes, isSuggested, mealAt } from '@/lib/helpers';
 import { absenceIcon, personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 import { Segmented } from './ui';
@@ -22,12 +22,13 @@ function AssignTile({ value, onChange }) {
   );
 }
 
-function MealCard({ date, slot, meal, openMeal, save }) {
-  const filled = isPlanned(meal);
+function MealCard({ date, slot, meal, openMeal, save, remove, me }) {
+  const filled = hasDishes(meal);
+  const sug = isSuggested(meal);
   const patch = (p) => save('meals', { ...meal, ...p });
   const cw = meal?.cook_when || 'same';
   return (
-    <div className={`meal-card${filled ? ' filled' : ' empty'}${meal?.done ? ' done' : ''}`}>
+    <div className={`meal-card${filled ? ' filled' : ' empty'}${meal?.done ? ' done' : ''}${sug ? ' suggested' : ''}`}>
       <motion.button type="button" className="mc-main" whileTap={{ scale: 0.97 }} onClick={() => openMeal(date, slot.id)}>
         <span className="mc-slot">{slot.icon} {slot.label}{meal?.done && <b className="done-tag">✓ Hecha</b>}</span>
         {filled ? (
@@ -37,7 +38,8 @@ function MealCard({ date, slot, meal, openMeal, save }) {
             </motion.span>
             <span className="mc-dish">{meal.dish || meal.dish2}</span>
             {meal.dish && meal.dish2 && <span className="mc-dish2">＋ {meal.dish2}</span>}
-            {cw !== 'same' && <span className="when-tag">{COOK_WHEN_TAG[cw]}</span>}
+            {cw !== 'same' && !sug && <span className="when-tag">{COOK_WHEN_TAG[cw]}</span>}
+            {!sug && meal.suggested_by && <span className="credit">💡 Sugerido por {person(meal.suggested_by)?.label}</span>}
           </>
         ) : (
           <>
@@ -46,7 +48,19 @@ function MealCard({ date, slot, meal, openMeal, save }) {
           </>
         )}
       </motion.button>
-      {filled && (
+      {sug && (
+        <>
+          <div className="suggest-box">
+            {meal.suggested_by && <Pic icon={personIcon(meal.suggested_by)} size={52} animate={false} />}
+            <span><small>💡 Sugerencia · pendiente de aceptar</small><b>{meal.suggested_by ? `${person(meal.suggested_by).label} propone esto` : 'Alguien propone esto'}</b></span>
+          </div>
+          <div className="toggle-row two">
+            <button type="button" className="done-toggle on" onClick={() => { buzz(20); save('meals', { ...meal, suggested: false }); }}>✅ Aceptar</button>
+            <button type="button" className="buy-toggle warn" onClick={() => { buzz(20); remove('meals', meal); }}>✖ Rechazar</button>
+          </div>
+        </>
+      )}
+      {filled && !sug && (
         <div className="assign-row">
           <AssignTile value={meal.cook} onChange={(v) => patch({ cook: v })} />
           <div className="when">
@@ -55,7 +69,7 @@ function MealCard({ date, slot, meal, openMeal, save }) {
           </div>
         </div>
       )}
-      {filled && (
+      {filled && !sug && (
         <div className={`toggle-row${meal.done ? '' : ' two'}`}>
           {!meal.done && (
             <button type="button" className={`buy-toggle${meal.needs_buy ? ' warn' : ''}`} onClick={() => { buzz(15); patch({ needs_buy: !meal.needs_buy }); }}>
@@ -77,7 +91,7 @@ function MealCard({ date, slot, meal, openMeal, save }) {
   );
 }
 
-export default function MealsView({ date, data, openMeal, save }) {
+export default function MealsView({ date, data, me, openMeal, save, remove }) {
   const away = awayList(data.absences, date);
   const evs = eventsOn(data.events, date);
   return (
@@ -90,7 +104,7 @@ export default function MealsView({ date, data, openMeal, save }) {
         </div>
       )}
       <div className="cards">
-        {SLOTS.map((s) => <MealCard key={s.id} date={date} slot={s} meal={mealAt(data.meals, date, s.id)} openMeal={openMeal} save={save} />)}
+        {SLOTS.map((s) => <MealCard key={s.id} date={date} slot={s} meal={mealAt(data.meals, date, s.id)} openMeal={openMeal} save={save} remove={remove} me={me} />)}
       </div>
     </>
   );
