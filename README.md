@@ -13,7 +13,7 @@ App móvil (Next.js 15 + React 19 + Framer Motion) para la gestión semanal del 
 Importa el repo y define `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (Settings → Environment Variables). No uses prefijo `NEXT_PUBLIC_` para la clave.
 
 ## Acceso y seguridad
-Sin cuentas de usuario: la familia comparte un **código** (se crea al entrar por primera vez). Todas las tablas tienen RLS activado sin políticas; solo se accede desde las rutas `/api` con la service role key. Quien conozca el código puede ver y editar: usa uno largo y no trivial. No hay límite de intentos (mejora recomendada si se expone públicamente).
+Sin cuentas de usuario: la familia comparte un **código** (no distingue mayúsculas). «Entrar» solo funciona con un código existente; las familias nuevas se crean explícitamente con «Crear familia». Todas las tablas tienen RLS activado sin políticas; solo se accede desde las rutas `/api` con la service role key. Quien conozca el código puede ver y editar: usa uno largo y no trivial. No hay límite de intentos (mejora recomendada si se expone públicamente).
 
 ## Avisos
 Se calculan en cliente (próximos 3 días laborables): comida/cena sin planificar, sin cocinero, cocinero ausente, falta compra o responsable, ambos padres ausentes, eventos de hoy/mañana, y semana siguiente sin planificar (de jueves en adelante). Las notificaciones del sistema se lanzan **al abrir la app**; el push en segundo plano requeriría Web Push + un cron (no incluido).
