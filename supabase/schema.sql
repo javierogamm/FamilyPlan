@@ -67,7 +67,8 @@ create table if not exists shopping (
   shopper text check (shopper in ('papa','mama','otros')),
   date date,
   done boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  list_id text
 );
 create index if not exists shopping_hh on shopping (household_id, done, date);
 
@@ -84,12 +85,26 @@ create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
 
+-- Migración 8 (varias listas de la compra y asociar compras a una lista):
+create table if not exists lists (
+  id uuid primary key,
+  household_id uuid not null references households(id) on delete cascade,
+  name text not null,
+  emoji text not null default '🧾',
+  created_at timestamptz not null default now()
+);
+alter table lists disable row level security;
+alter table list_items add column if not exists list_id text not null default 'main';
+alter table shopping add column if not exists list_id text;
+create index if not exists list_items_list on list_items (household_id, list_id);
+
 -- Migración 7 (lista de la compra):
 create table if not exists list_items (
   id uuid primary key,
   household_id uuid not null references households(id) on delete cascade,
   name text not null,
   store text not null default 'super' check (store in ('super','fruteria','carniceria','pascual','otros')),
+  list_id text not null default 'main',
   qty int not null default 1,
   carry int not null default 0,
   checked boolean not null default false,

@@ -14,6 +14,7 @@ import { Segmented } from './ui';
 import AlertsView from './AlertsView';
 import ComprasView from './ComprasView';
 import ShopSheet from './ShopSheet';
+import ListSheet from './ListSheet';
 import SeriesSheet from './SeriesSheet';
 import SeriesList from './SeriesList';
 import AccountSheet from './AccountSheet';
@@ -40,7 +41,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const [today, setToday] = useState(todayISO);
   const [toast, setToast] = useState(null);
   const showToast = useCallback((t) => setToast({ ...t, n: Date.now() }), []);
-  const { data, ready, save, saveMany, remove, removeSeries, removeChecked } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
+  const { data, ready, save, saveMany, remove, removeSeries, removeChecked, removeList } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
 
   const [tab, setTab] = useState('semana');
   const [monday, setMonday] = useState(() => mondayOf(startDay(todayISO())));
@@ -48,6 +49,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const [dir, setDir] = useState(1);
   const [sheet, setSheet] = useState(null);
   const [mealsMode, setMealsMode] = useState('day');
+  const [listId, setListId] = useState('main');
   const counter = useRef(0);
   const [dismissed, setDismissed] = useState(() => load('fp_dismissed', []));
   const [notif, setNotif] = useState('unsupported');
@@ -178,7 +180,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
             {tab === 'agenda' && (
               <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
             )}
-            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} removeWithUndo={removeWithUndo} />}
+            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} listId={listId} setListId={setListId} openListSheet={(l) => open({ kind: 'list', edit: l || null })} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
               <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={() => open({ kind: 'who' })} />
             )}
@@ -220,7 +222,8 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
       {sheet?.kind === 'who' && <AccountSheet key={sheet.n} open={sheet.open} me={me} code={code} families={families} onPickMe={onPickMe} onSwitch={onSwitch} onAdd={onAdd} onForget={onForget} onClose={closeSheet} />}
       {sheet?.kind === 'series' && <SeriesList key={sheet.n} open={sheet.open} today={today} events={data.events} onNew={() => openSeriesForm()} onEdit={(g) => openSeriesForm(g)} onDelete={deleteSeries} onClose={closeSheet} />}
       {sheet?.kind === 'seriesForm' && <SeriesSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} saveMany={saveMany} removeSeries={removeSeries} onClose={closeSheet} />}
-      {sheet?.kind === 'shop' && <ShopSheet key={sheet.n} open={sheet.open} today={today} edit={sheet.edit} store={sheet.store} prefill={sheet.prefill} save={save} onDelete={(row) => removeWithUndo('shopping', row)} onClose={closeSheet} />}
+      {sheet?.kind === 'list' && <ListSheet key={sheet.n} open={sheet.open} edit={sheet.edit} save={save} onCreated={(id) => setListId(id)} onDelete={(l) => { data.shopping.filter((t) => t.list_id === l.id).forEach((t) => save('shopping', { ...t, list_id: null })); removeList(l); }} onClose={closeSheet} />}
+      {sheet?.kind === 'shop' && <ShopSheet key={sheet.n} open={sheet.open} lists={data.lists} today={today} edit={sheet.edit} store={sheet.store} prefill={sheet.prefill} save={save} onDelete={(row) => removeWithUndo('shopping', row)} onClose={closeSheet} />}
       {sheet?.kind === 'add' && <AddSheet key={sheet.n} open={sheet.open} date={sheet.date} edit={sheet.edit} preset={sheet.preset} me={me} save={save} onDelete={(row) => removeWithUndo('person' in row ? 'absences' : 'events', row)} onClose={closeSheet} />}
     </div>
   );

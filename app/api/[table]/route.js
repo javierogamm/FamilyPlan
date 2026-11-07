@@ -19,7 +19,11 @@ const SCHEMA = {
   },
   list_items: {
     required: ['id', 'name'],
-    fields: { id: 'uuid', name: 's60', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], qty: 'int', carry: 'int', checked: 'bool', added_by: ['papa', 'mama', null] },
+    fields: { id: 'uuid', name: 's60', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], list_id: 's40', qty: 'int', carry: 'int', checked: 'bool', added_by: ['papa', 'mama', null] },
+  },
+  lists: {
+    required: ['id', 'name'],
+    fields: { id: 'uuid', name: 's40', emoji: 's8' },
   },
   item_stock: {
     conflict: 'household_id,name_key',
@@ -28,7 +32,7 @@ const SCHEMA = {
   },
   shopping: {
     required: ['id', 'store'],
-    fields: { id: 'uuid', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], items: 's200', shopper: [...PEOPLE, null], date: 'date?', done: 'bool' },
+    fields: { id: 'uuid', store: ['super', 'fruteria', 'carniceria', 'pascual', 'otros'], items: 's200', shopper: [...PEOPLE, null], date: 'date?', done: 'bool', list_id: 'lid?' },
   },
   dishes: {
     required: ['id', 'name'],
@@ -61,6 +65,11 @@ function check(rule, v, name) {
     if (v == null || v === '') return null;
     if (typeof v !== 'string' || !/^\d{2}:\d{2}(:\d{2})?$/.test(v)) throw bad();
     return v.slice(0, 5);
+  }
+  if (rule === 'lid?') {
+    if (v == null || v === '') return null;
+    if (typeof v !== 'string' || !/^(main|[0-9a-f-]{36})$/i.test(v)) throw bad();
+    return v.toLowerCase();
   }
   if (rule === 'uuid?') {
     if (v == null || v === '') return null;
@@ -127,8 +136,9 @@ export const DELETE = handle(async (request, { params }) => {
   const hid = await householdId(request);
   const sp = new URL(request.url).searchParams;
   let q = db().from(table).delete().eq('household_id', hid);
-  if (table === 'list_items' && sp.get('checked')) {
-    q = q.eq('checked', true);
+  if (table === 'list_items' && (sp.get('checked') || sp.get('list'))) {
+    if (sp.get('checked')) q = q.eq('checked', true);
+    if (sp.get('list')) q = q.eq('list_id', check('lid?', sp.get('list'), 'list'));
   } else if (table === 'events' && sp.get('series')) {
     q = q.eq('series_id', check('uuid', sp.get('series'), 'series')).gte('date', check('date', sp.get('from'), 'from'));
   } else if (table === 'meals') {

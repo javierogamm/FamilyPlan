@@ -8,12 +8,16 @@ import SwipeRow from './SwipeRow';
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export default function ListaView({ today, data, me, save, saveMany, remove, removeChecked, toast }) {
+export default function ListaView({ today, data, me, save, saveMany, remove, removeChecked, toast, listId, setListId, openListSheet }) {
   const [q, setQ] = useState('');
   const [newStore, setNewStore] = useState('super');
   const [showDone, setShowDone] = useState(false);
   const inputRef = useRef(null);
-  const items = data.list_items;
+  const allLists = [{ id: 'main', name: 'Principal', emoji: '🧾' }, ...data.lists];
+  const current = allLists.find((l) => l.id === listId) || allLists[0];
+  const items = data.list_items.filter((i) => (i.list_id || 'main') === current.id);
+  const assoc = data.shopping.filter((t) => t.list_id === current.id && !t.done);
+  const pending = (id) => data.list_items.filter((i) => !i.checked && (i.list_id || 'main') === id).length;
   const open = items.filter((i) => !i.checked);
   const done = items.filter((i) => i.checked);
 
@@ -35,7 +39,7 @@ export default function ListaView({ today, data, me, save, saveMany, remove, rem
     const key = normItem(name);
     const existing = items.find((i) => normItem(i.name) === key);
     if (existing) save('list_items', existing.checked ? { ...existing, checked: false } : { ...existing, qty: Math.min(9, (existing.qty || 1) + 1) });
-    else save('list_items', { id: uid(), name, store: st, qty: 1, carry: 0, checked: false, added_by: me });
+    else save('list_items', { id: uid(), name, store: st, list_id: current.id, qty: 1, carry: 0, checked: false, added_by: me });
     const stock = data.item_stock.find((s) => (s.name_key || normItem(s.name)) === key);
     save('item_stock', { name, store: st, emoji: emoji || '🛒', uses: (stock?.uses || 0) + 1, last_used: today });
     setQ('');
@@ -59,13 +63,17 @@ export default function ListaView({ today, data, me, save, saveMany, remove, rem
     buzz(30);
     const taken = done;
     const left = open;
-    removeChecked();
+    removeChecked(current.id);
     if (left.length) saveMany('list_items', left.map((i) => ({ ...i, carry: (i.carry || 0) + 1 })));
+    // la compra (evento) asociada más próxima pasa a hecha
+    const ev = [...assoc].sort((a, b) => (a.date || '9').localeCompare(b.date || '9'))[0];
+    if (ev) save('shopping', { ...ev, done: true });
     toast({
-      msg: `✅ Compra terminada · ${taken.length} cogidos${left.length ? ` · ${left.length} pasan a la próxima` : ''}`,
+      msg: `✅ Compra terminada · ${taken.length} cogidos${left.length ? ` · ${left.length} pasan a la próxima` : ''}${ev ? ' · evento hecho' : ''}`,
       undo: () => {
         if (taken.length) saveMany('list_items', taken);
         if (left.length) saveMany('list_items', left);
+        if (ev) save('shopping', ev);
       },
     });
   };
@@ -89,8 +97,23 @@ export default function ListaView({ today, data, me, save, saveMany, remove, rem
 
   return (
     <div className="lista">
+      <div className="list-tabs h-scroll">
+        {allLists.map((l) => (
+          <button key={l.id} type="button" className={`list-tab${l.id === current.id ? ' on' : ''}`} onClick={() => { buzz(8); setListId(l.id); }}>
+            {l.emoji} {l.name}{pending(l.id) > 0 && <i>{pending(l.id)}</i>}
+          </button>
+        ))}
+        <button type="button" className="list-tab add" onClick={() => openListSheet()}>＋ Nueva lista</button>
+      </div>
+      {current.id !== 'main' && <button type="button" className="link list-edit" onClick={() => openListSheet(current)}>✏️ Editar o borrar «{current.name}»</button>}
+      {assoc.length > 0 && (
+        <div className="assoc">
+          <span>🗓️ Asociada a:</span>
+          {assoc.map((t) => <b key={t.id}>{store(t.store).emoji} {store(t.store).label}{t.date ? ` · ${t.date.slice(8)}/${t.date.slice(5, 7)}` : ''}</b>)}
+        </div>
+      )}
       <form className="add-bar" onSubmit={submit}>
-        <input ref={inputRef} className="field" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Añadir a la lista… (leche, pan, pollo)" enterKeyHint="done" autoComplete="off" autoCorrect="off" spellCheck={false} maxLength={60} />
+        <input ref={inputRef} className="field" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Añadir a «${current.name}»… (leche, pan)`} enterKeyHint="done" autoComplete="off" autoCorrect="off" spellCheck={false} maxLength={60} />
         <button type="submit" className="round add-go" aria-label="Añadir" disabled={!q.trim()}>＋</button>
       </form>
 
