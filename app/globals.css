@@ -496,3 +496,6 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 .list-link { margin-top: 4px; justify-self: start; padding: 3px 10px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 12%, var(--card)); color: var(--primary); font-weight: 800; font-size: 12.5px; }
 
 .task-edit { width: 40px; height: 40px; border-radius: 50%; flex: none; background: color-mix(in srgb, var(--ink) 7%, transparent); font-size: 16px; }
+
+.past-toggle { display: block; width: 100%; min-height: 40px; margin-bottom: 8px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); font-weight: 700; font-size: 13.5px; }
+.ag-item.past { opacity: .5; }

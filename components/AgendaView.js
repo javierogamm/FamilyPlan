@@ -13,6 +13,9 @@ const CYCLE = [null, 'papa', 'mama'];
 
 export default function AgendaView({ save, monday, today, selected, data, me, openMeal, openShop, openList, openEvent, openAbsence, openAdd, openSeries, removeWithUndo }) {
   const [mine, setMine] = useState(false);
+  const [showPast, setShowPast] = useState(false);
+  const nowD = new Date();
+  const nowHHMM = `${String(nowD.getHours()).padStart(2, '0')}:${String(nowD.getMinutes()).padStart(2, '0')}`;
   const cycleTransport = (e) => {
     buzz(12);
     save('events', { ...e, transport: CYCLE[(CYCLE.indexOf(e.transport ?? null) + 1) % CYCLE.length] });
@@ -25,13 +28,17 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
         <button type="button" className="quick" onClick={() => openAdd(selected, null, { type: 'ausencia', kind: 'viaje' })}>✈️ Me voy de viaje</button>
         <button type="button" className="quick" onClick={() => openAdd(selected, null, { type: 'ausencia', kind: 'trabajo' })}>💻 Estoy trabajando</button>
       </div>
-      <p className="muted hint">Toca para editar · desliza a la izquierda para borrar · toca el icono 🛵 para asignar quién lleva</p>
+      <p className="muted hint">Desliza ← → para ver otros días · toca para editar · desliza una fila para borrarla</p>
       <div className="agenda">
         {weekDays(monday, 7).map((d) => {
-          const evs = eventsOn(data.events, d);
+          const allEv = eventsOn(data.events, d);
+          // lo ya pasado de hoy se pliega para no ensuciar
+          const pastEv = d === today ? allEv.filter((e) => e.time && hhmm(e.time) < nowHHMM) : [];
+          const evs = allEv.filter((e) => !pastEv.includes(e));
+          const shown = showPast ? [...pastEv, ...evs] : evs;
           const abs = data.absences.filter((a) => a.start_date <= d && d <= a.end_date);
           const tasks = agendaTasks(data, d, today).filter((t) => !mine || !t.person || t.person === me);
-          const empty = !evs.length && !abs.length && !tasks.length;
+          const empty = !evs.length && !pastEv.length && !abs.length && !tasks.length;
           return (
             <section key={d} className={`ag-day${d === today ? ' today' : ''}${d === selected ? ' sel' : ''}${isWeekend(d) ? ' weekend' : ''}`}>
               <div className="ag-head">
@@ -79,6 +86,7 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                   })}
                 </div>
               )}
+              {pastEv.length > 0 && <button type="button" className="past-toggle" onClick={() => setShowPast((v) => !v)}>🕘 {showPast ? 'Ocultar lo de antes' : `Ya pasado hoy (${pastEv.length})`}</button>}
               <AnimatePresence initial={false}>
                 {abs.map((a) => (
                   <SwipeRow key={a.id} className={`ag-item abs aw-${a.person}`} onClick={() => openAbsence(a)} onDelete={() => removeWithUndo('absences', a)}>
@@ -87,11 +95,11 @@ export default function AgendaView({ save, monday, today, selected, data, me, op
                     {a.start_date !== a.end_date && <em>{a.start_date.slice(8)}/{a.start_date.slice(5, 7)} → {a.end_date.slice(8)}/{a.end_date.slice(5, 7)}</em>}
                   </SwipeRow>
                 ))}
-                {evs.map((e) => {
+                {shown.map((e) => {
                   const icons = eventIcons(e);
                   const bad = e.needs_transport && e.transport ? absenceAt(data.absences, e.transport, d, hhmm(e.time)) : null;
                   return (
-                    <SwipeRow key={e.id} className={`ag-item k-${e.kind}${e.needs_transport ? ' tr-need' : ''}${bad ? ' conflict' : ''}`} onClick={() => openEvent(e)} onDelete={() => removeWithUndo('events', e)}>
+                    <SwipeRow key={e.id} className={`ag-item k-${e.kind}${e.needs_transport ? ' tr-need' : ''}${bad ? ' conflict' : ''}${pastEv.includes(e) ? ' past' : ''}`} onClick={() => openEvent(e)} onDelete={() => removeWithUndo('events', e)}>
                       {icons.length ? <PicStack icons={icons} size={52} /> : <span className="ag-ico">{e.emoji}</span>}
                       <span className="ag-main">
                         <b>{e.title}</b>

@@ -5,15 +5,15 @@ import { absentOn, eventsOn } from '@/lib/helpers';
 import { personIcon } from '@/lib/icons';
 import { Pic } from './Pic';
 
-export default function WeekBar({ me, onMe, monday, selected, today, showDays, data, onSelect, onShift, onToday }) {
+export default function WeekBar({ rangeMode, me, onMe, monday, selected, today, showDays, data, onSelect, onShift, onToday }) {
   const { title, range } = weekTitle(monday);
-  const isThisWeek = mondayOf(today) === monday;
+  const isThisWeek = rangeMode ? monday === today : mondayOf(today) === monday;
   return (
     <header className="weekbar">
       <div className="wb-top">
         <div>
           <h1>{title}</h1>
-          <p>Semana {range}</p>
+          <p>{rangeMode ? (monday === today ? `Desde hoy · ${range}` : range) : `Semana ${range}`}</p>
         </div>
         <div className="wb-actions">
           {me && <button type="button" className="me-btn" aria-label="Cambiar de persona" onClick={onMe}><Pic icon={personIcon(me)} size={40} animate={false} ring /></button>}
