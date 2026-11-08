@@ -22,9 +22,8 @@ function dateTag(d, today) {
   return { text: `${weekdayName(d)} ${dm}`, late: false };
 }
 
-export default function ComprasView({ today, data, me, save, saveMany, removeChecked, toast, openShop, openListSheet, listId, setListId, removeWithUndo }) {
+export default function ComprasView({ today, data, me, save, saveMany, removeChecked, toast, openShop, openListSheet, listId, setListId, view, setView, removeWithUndo }) {
   const [showDone, setShowDone] = useState(false);
-  const [view, setView] = useState('lista');
   const seg = <Segmented name="compras-view" value={view} onChange={setView} options={[{ value: 'lista', label: '🧾 Lista de la compra' }, { value: 'tareas', label: '🗓️ Compras' }]} />;
   const pending = data.shopping.filter((t) => !t.done).sort((a, b) => (a.date || '9').localeCompare(b.date || '9'));
   const done = data.shopping.filter((t) => t.done).sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 15);

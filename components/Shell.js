@@ -43,13 +43,18 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   const showToast = useCallback((t) => setToast({ ...t, n: Date.now() }), []);
   const { data, ready, save, saveMany, remove, removeSeries, removeChecked, removeList } = useFamily(code, { onAuthError: onLogout, onError: (msg) => showToast({ msg: `⚠️ ${msg}` }) });
 
-  const [tab, setTab] = useState('semana');
+  const [tab, setTab] = useState('agenda');
   const [monday, setMonday] = useState(() => mondayOf(startDay(todayISO())));
   const [selected, setSelected] = useState(() => startDay(todayISO()));
   const [dir, setDir] = useState(1);
   const [sheet, setSheet] = useState(null);
   const [mealsMode, setMealsMode] = useState('day');
+  const [agendaStart, setAgendaStart] = useState(() => todayISO());
+  const shiftAgenda = (delta) => { setDir(delta); setAgendaStart((s) => addDays(s, 7 * delta)); };
+  const agendaDate = today >= agendaStart && today < addDays(agendaStart, 7) ? today : agendaStart;
   const [listId, setListId] = useState('main');
+  const [comprasView, setComprasView] = useState('lista');
+  const openList = (id) => { setListId(id || 'main'); setComprasView('lista'); setTab('compras'); };
   const counter = useRef(0);
   const [dismissed, setDismissed] = useState(() => load('fp_dismissed', []));
   const [notif, setNotif] = useState('unsupported');
@@ -126,7 +131,11 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
     const gd = a.go.date;
     setMonday(mondayOf(gd));
     setSelected(gd);
+    if (a.go.tab === 'agenda' && !(gd >= agendaStart && gd < addDays(agendaStart, 7))) setAgendaStart(gd);
     setTab(a.go.tab);
+    if (a.go.tab === 'compras') {
+      if (a.go.list) { setListId(a.go.list); setComprasView('lista'); } else setComprasView(a.go.view || 'tareas');
+    }
     if (a.go.slot) openMeal(a.go.date, a.go.slot);
   };
   const enableNotif = async () => {
@@ -137,7 +146,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
 
   // Teclado (PC): ← → cambian de día (Comidas) o de semana (resto).
   const keyNav = useRef();
-  keyNav.current = (delta) => (tab === 'comidas' && mealsMode === 'day' ? shiftDay(delta) : shiftWeek(delta));
+  keyNav.current = (delta) => (tab === 'agenda' ? shiftAgenda(delta) : tab === 'comidas' && mealsMode === 'day' ? shiftDay(delta) : shiftWeek(delta));
   useEffect(() => {
     const onKey = (e) => {
       if (sheet?.open || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -153,7 +162,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
     <div className="app">
       <div className="blobs" aria-hidden><i /><i /><i /></div>
       {tab !== 'avisos' && tab !== 'compras' && (
-        <WeekBar me={me} onMe={() => open({ kind: 'who' })} monday={monday} selected={selected} today={today} showDays={(tab === 'comidas' && mealsMode === 'day') || tab === 'agenda'} data={data} onSelect={selectDay} onShift={shiftWeek} onToday={goToday} />
+        <WeekBar rangeMode={tab === 'agenda'} me={me} onMe={() => open({ kind: 'who' })} monday={tab === 'agenda' ? agendaStart : monday} selected={selected} today={today} showDays={tab === 'comidas' && mealsMode === 'day'} data={data} onSelect={selectDay} onShift={tab === 'agenda' ? shiftAgenda : shiftWeek} onToday={tab === 'agenda' ? () => { setDir(today > agendaStart ? 1 : -1); setAgendaStart(today); } : goToday} />
       )}
       <main className="main">
         {!ready ? (
@@ -178,9 +187,11 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
               </>
             )}
             {tab === 'agenda' && (
-              <AgendaView save={save} me={me} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={monday} today={today} selected={selected} data={data} openEvent={(e) => openAdd(selected, e)} openAbsence={(a) => openAdd(selected, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
+              <Swipe id={`ag-${agendaStart}`} dir={dir} onSwipe={shiftAgenda}>
+                <AgendaView save={save} me={me} openList={openList} openMeal={openMeal} openShop={openShop} openSeries={openSeries} monday={agendaStart} today={today} selected={agendaDate} data={data} openEvent={(e) => openAdd(agendaDate, e)} openAbsence={(a) => openAdd(agendaDate, a)} openAdd={openAdd} removeWithUndo={removeWithUndo} />
+              </Swipe>
             )}
-            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} listId={listId} setListId={setListId} openListSheet={(l) => open({ kind: 'list', edit: l || null })} removeWithUndo={removeWithUndo} />}
+            {tab === 'compras' && <ComprasView today={today} data={data} me={me} save={save} saveMany={saveMany} removeChecked={removeChecked} toast={showToast} openShop={openShop} listId={listId} setListId={setListId} view={comprasView} setView={setComprasView} openListSheet={(l) => open({ kind: 'list', edit: l || null })} removeWithUndo={removeWithUndo} />}
             {tab === 'avisos' && (
               <AlertsView me={me} onMe={() => open({ kind: 'who' })} alerts={alerts} onGo={goAlert} onDismiss={dismiss} notif={notif} onEnableNotif={enableNotif} code={code} onLogout={() => open({ kind: 'who' })} />
             )}
@@ -190,7 +201,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
 
       <AnimatePresence>
         {(tab === 'semana' || tab === 'agenda') && ready && (
-          <motion.button key="fab" type="button" className="fab" aria-label="Añadir a la agenda" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} whileTap={{ scale: 0.88 }} onClick={() => { buzz(); openAdd(selected); }}>
+          <motion.button key="fab" type="button" className="fab" aria-label="Añadir a la agenda" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} whileTap={{ scale: 0.88 }} onClick={() => { buzz(); openAdd(tab === 'agenda' ? agendaDate : selected); }}>
             ＋
           </motion.button>
         )}
