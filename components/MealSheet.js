@@ -91,7 +91,7 @@ export default function MealSheet({ open, date, slotId, me, data, save, remove, 
       title={`${slot.icon} ${slot.label} · ${longDate(date)}`}
       footer={
         <>
-          {meal && <button type="button" className="btn ghost danger" onClick={() => { remove('meals', meal); onClose(); }}>Quitar</button>}
+          {meal && <button type="button" className="btn ghost danger" onClick={() => { remove('meals', meal); onClose(); }}>↺ Resetear</button>}
           <button type="button" className="btn primary grow" onClick={onClose}>Listo</button>
         </>
       }

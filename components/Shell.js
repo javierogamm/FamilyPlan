@@ -119,7 +119,12 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
 
   const removeWithUndo = (table, row) => {
     remove(table, row);
-    showToast({ msg: table === 'meals' ? 'Plato quitado' : 'Borrado', undo: () => save(table, row) });
+    showToast({ msg: table === 'meals' ? '↺ Comida reseteada' : 'Borrado', undo: () => save(table, row) });
+  };
+  /** Resetea varias comidas a la vez (p. ej. comida y cena del día). */
+  const resetMeals = (rows, msg) => {
+    rows.forEach((r) => remove('meals', r));
+    showToast({ msg, undo: () => rows.forEach((r) => save('meals', r)) });
   };
   const dismiss = (id) => {
     const next = [...dismissed, id].slice(-300);
@@ -179,7 +184,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
                 <Segmented name="meals-mode" value={mealsMode} onChange={setMealsMode} options={[{ value: 'day', label: '📅 Por día' }, { value: 'history', label: '🍴 ¿Qué hemos comido?' }]} />
                 {mealsMode === 'day' ? (
                   <Swipe id={`d-${selected}`} dir={dir} onSwipe={shiftDay}>
-                    <MealsView date={selected} data={data} me={me} openMeal={openMeal} save={save} remove={removeWithUndo} />
+                    <MealsView date={selected} data={data} me={me} openMeal={openMeal} save={save} remove={removeWithUndo} onReset={resetMeals} />
                   </Swipe>
                 ) : (
                   <HistoryView monday={monday} today={today} data={data} openMeal={openMeal} />
