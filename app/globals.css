@@ -499,3 +499,6 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 
 .past-toggle { display: block; width: 100%; min-height: 40px; margin-bottom: 8px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); font-weight: 700; font-size: 13.5px; }
 .ag-item.past { opacity: .5; }
+
+.reset-btn { display: block; width: calc(100% - 24px); margin: 0 12px 10px; min-height: 40px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); font-weight: 700; font-size: 13.5px; }
+.reset-day { min-height: 40px; padding: 0 16px; margin: 0 0 10px; border-radius: 20px; background: color-mix(in srgb, #e5484d 12%, var(--card)); color: #e5484d; font-weight: 800; font-size: 13.5px; }

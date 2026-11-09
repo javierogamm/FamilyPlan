@@ -60,6 +60,9 @@ function MealCard({ date, slot, meal, openMeal, save, remove, me }) {
           </div>
         </>
       )}
+      {filled && (
+        <button type="button" className="reset-btn" onClick={() => { buzz(20); remove('meals', meal); }}>↺ Resetear {slot.label.toLowerCase()}</button>
+      )}
       {filled && !sug && (
         <div className="assign-row">
           <AssignTile value={meal.cook} onChange={(v) => patch({ cook: v })} />
@@ -91,7 +94,8 @@ function MealCard({ date, slot, meal, openMeal, save, remove, me }) {
   );
 }
 
-export default function MealsView({ date, data, me, openMeal, save, remove }) {
+export default function MealsView({ date, data, me, openMeal, save, remove, onReset }) {
+  const dayMeals = SLOTS.map((s) => mealAt(data.meals, date, s.id)).filter(Boolean);
   const away = awayList(data.absences, date);
   const evs = eventsOn(data.events, date);
   return (
@@ -102,6 +106,9 @@ export default function MealsView({ date, data, me, openMeal, save, remove }) {
           {away.map((a) => <span key={a.id} className={`away-chip aw-${a.person}`}><Pic icon={absenceIcon(a)} size={32} animate={false} />{person(a.person).label} {absLabel(a, date)}</span>)}
           {evs.map((e) => <span key={e.id} className="away-chip aw-ev">{e.emoji} {hhmm(e.time)} {e.title}</span>)}
         </div>
+      )}
+      {dayMeals.length > 0 && (
+        <button type="button" className="reset-day" onClick={() => { buzz(25); onReset(dayMeals, `↺ ${dayMeals.length > 1 ? 'Comida y cena reseteadas' : 'Comida reseteada'}`); }}>↺ Resetear el día ({dayMeals.length})</button>
       )}
       <div className="cards">
         {SLOTS.map((s) => <MealCard key={s.id} date={date} slot={s} meal={mealAt(data.meals, date, s.id)} openMeal={openMeal} save={save} remove={remove} me={me} />)}
