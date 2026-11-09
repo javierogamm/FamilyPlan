@@ -78,6 +78,7 @@ export default function Shell({ code, me, families, onPickMe, onSwitch, onAdd, o
   // Notificaciones del sistema para lo urgente (una vez por aviso). Se generan al abrir la app.
   useEffect(() => {
     if (notif !== 'granted' || !ready) return;
+    try { if (localStorage.getItem('fp_push') === '1') return; } catch {} // con push activo no se duplican
     const seen = load('fp_notified', []);
     const fresh = alerts.filter((a) => a.level === 'high' && !seen.includes(a.id));
     if (!fresh.length) return;

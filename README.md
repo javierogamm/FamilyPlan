@@ -17,3 +17,13 @@ Sin cuentas de usuario: la familia comparte un **código** (no distingue mayúsc
 
 ## Avisos
 Se calculan en cliente (próximos 3 días laborables): comida/cena sin planificar, sin cocinero, cocinero ausente, falta compra o responsable, ambos padres ausentes, eventos de hoy/mañana, y semana siguiente sin planificar (de jueves en adelante). Las notificaciones del sistema se lanzan **al abrir la app**; el push en segundo plano requeriría Web Push + un cron (no incluido).
+
+## Notificaciones push
+Llegan con la app cerrada (Android/Chrome, y iPhone ≥ 16.4 con la app instalada en la pantalla de inicio):
+- 30 min antes de cada extraescolar (a quien lleva; a todos si no hay nadie asignado).
+- 19:30: platos marcados «Noche antes» para mañana.
+- 12:00 y 17:00: tareas del día de cada progenitor (cocinar, comprar, llevar/recoger).
+
+Configuración: claves VAPID y `CRON_SECRET` (ver `.env.example`), tablas de la Migración 9 y un programador externo que llame cada 5 minutos a
+`GET /api/cron/notify` con `Authorization: Bearer <CRON_SECRET>`. El cron gratuito de Vercel solo permite una ejecución diaria, por eso se
+recomienda `pg_cron` + `pg_net` de Supabase (SQL en la documentación del PR) o el cron de Vercel en plan Pro (`*/5 * * * *`).

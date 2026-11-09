@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { person } from '@/lib/constants';
+import PushControls from './PushControls';
 import SwipeRow from './SwipeRow';
 
 const LEVEL = { high: 'Urgente', med: 'Pendiente', info: 'Recordatorio' };
@@ -12,7 +13,8 @@ export default function AlertsView({ alerts: all, me, onGo, onDismiss, notif, on
   return (
     <div className="alerts">
       <h1 className="page-title">Avisos</h1>
-      {notif === 'default' && (
+      <PushControls code={code} me={me} />
+      {false && notif === 'default' && (
         <motion.button type="button" className="notif-cta" whileTap={{ scale: 0.97 }} onClick={onEnableNotif}>
           🔔 <span><b>Activar notificaciones</b><small>Te avisamos al abrir la app de lo urgente. En iPhone, primero añade la app a la pantalla de inicio.</small></span>
         </motion.button>
