@@ -85,6 +85,25 @@ create index if not exists meals_hh_date on meals (household_id, date);
 create index if not exists absences_hh_end on absences (household_id, end_date);
 create index if not exists events_hh_date on events (household_id, date);
 
+-- Migración 9 (notificaciones push):
+create table if not exists push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  person text check (person in ('papa','mama')),
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists push_log (
+  household_id uuid not null references households(id) on delete cascade,
+  key text not null,
+  sent_at timestamptz not null default now(),
+  primary key (household_id, key)
+);
+alter table push_subscriptions disable row level security;
+alter table push_log disable row level security;
+
 -- Migración 8 (varias listas de la compra y asociar compras a una lista):
 create table if not exists lists (
   id uuid primary key,
