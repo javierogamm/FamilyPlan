@@ -1,8 +1,8 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { COOK_WHEN, DISH_EMOJIS, SLOTS } from '@/lib/constants';
-import { CATEGORIES, DISHES, norm, searchDishes } from '@/lib/dishes';
+import { COOK_WHEN, SLOTS } from '@/lib/constants';
+import { CATEGORIES, DISHES, DISH_ICONS, guessEmoji, norm, searchDishes } from '@/lib/dishes';
 import { longDate } from '@/lib/dates';
 import { PARENTS, person } from '@/lib/constants';
 import { absentOn, buzz, isPlanned, isSuggested, hasDishes, mealAt, uid } from '@/lib/helpers';
@@ -25,8 +25,13 @@ export default function MealSheet({ open, date, slotId, me, data, save, remove, 
   const [allCourses, setAllCourses] = useState(false);
   const [seed, setSeed] = useState(1);
   const [adding, setAdding] = useState(false);
-  const [emoji, setEmoji] = useState(DISH_EMOJIS[0]);
+  const [newName, setNewName] = useState('');
+  const [emoji, setEmoji] = useState('🍽️');
   const [newCourse, setNewCourse] = useState('b');
+  const [focused, setFocused] = useState(false);
+  const inputRef = useRef(null);
+  // Mientras se busca se oculta lo demás: los resultados quedan arriba, visibles con el teclado abierto
+  const typing = (focused || query.trim().length > 0) && !adding;
   const [suggest, setSuggest] = useState(!!meal?.suggested);
   const parent = PARENTS.some((p) => p.id === me) ? me : null;
 
@@ -63,18 +68,32 @@ export default function MealSheet({ open, date, slotId, me, data, save, remove, 
   const pick = (d) => {
     buzz(12);
     patch({ [field.name]: d.name, [field.emoji]: d.emoji, ...(suggest ? { suggested: true, suggested_by: meal?.suggested_by || parent } : {}) });
-    if (course === 'p' && !meal?.dish2) { setCourse('s'); setQuery(''); setCat(''); setLimit(PAGE); }
+    if (course === 'p' && !meal?.dish2) { setCourse('s'); setCat(''); setLimit(PAGE); }
+    setQuery('');
   };
   const clear = (c) => { buzz(); patch(c === 'p' ? { dish: '', emoji: '🍽️' } : { dish2: '', emoji2: '🍽️' }); };
   const exact = query.trim() && results.some((d) => d.key === norm(query.trim()));
+  const startAdd = () => {
+    const n = query.trim();
+    setNewName(n);
+    setEmoji(guessEmoji(n));
+    setNewCourse(course === 'p' ? 'p' : 's');
+    setAdding(true);
+  };
   const addDish = (e) => {
     e.preventDefault();
-    const n = query.trim();
+    const n = newName.trim();
     if (!n) return;
-    save('dishes', { id: uid(), name: n, emoji, course: COURSE_DB[newCourse] });
-    pick({ name: n, emoji });
+    const found = DISHES.find((d) => d.key === norm(n)) || data.dishes.find((d) => norm(d.name) === norm(n));
+    if (found) pick(found);
+    else {
+      save('dishes', { id: uid(), name: n, emoji, course: COURSE_DB[newCourse] });
+      pick({ name: n, emoji });
+    }
     setQuery(''); setAdding(false);
   };
+  // mantener el teclado abierto al tocar un resultado
+  const keep = (e) => e.preventDefault();
 
   const courseCard = (c, name, em) => (
     <button type="button" className={`course${course === c ? ' on' : ''}`} onClick={() => { setCourse(c); setLimit(PAGE); }}>
@@ -96,74 +115,87 @@ export default function MealSheet({ open, date, slotId, me, data, save, remove, 
         </>
       }
     >
-      <div className="courses">
+      <div className={`courses${typing ? ' compact' : ''}`}>
         {courseCard('p', meal?.dish, meal?.emoji)}
         {courseCard('s', meal?.dish2, meal?.emoji2)}
       </div>
-      {isSuggested(meal) && (
+      {isSuggested(meal) && !typing && (
         <div className="suggest-box in-sheet">
           <span><small>💡 Sugerencia de {meal.suggested_by ? person(meal.suggested_by).label : 'alguien'}</small><b>Pendiente de aceptar</b></span>
           <button type="button" className="btn primary sm" onClick={() => { buzz(20); setSuggest(false); patch({ suggested: false }); }}>✅ Aceptar</button>
           <button type="button" className="btn ghost danger sm" onClick={() => { remove('meals', meal); onClose(); }}>✖</button>
         </div>
       )}
-      <Segmented name="meal-tab" value={tab} onChange={setTab} options={TABS} />
+      {!typing && !adding && <Segmented name="meal-tab" value={tab} onChange={setTab} options={TABS} />}
 
       {tab === 'dishes' && (
         <>
-          {!isSuggested(meal) && (
+          {adding ? (
+            <motion.form className="add-dish" onSubmit={addDish} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <h3 className="label">Nuevo plato · se añade a tu base de datos</h3>
+              <input className="field" value={newName} onChange={(e) => { setNewName(e.target.value); setEmoji(guessEmoji(e.target.value)); }} placeholder="Nombre del plato" maxLength={60} autoFocus />
+              <h3 className="label">Icono <span className="muted">{emoji}</span></h3>
+              <div className="icon-pick">
+                {DISH_ICONS.map((e) => <button key={e} type="button" className={e === emoji ? 'on' : ''} onClick={() => { buzz(); setEmoji(e); }}>{e}</button>)}
+              </div>
+              <h3 className="label">Sirve para</h3>
+              <Segmented name="newcourse" value={newCourse} onChange={setNewCourse} options={[{ value: 'p', label: 'Primero' }, { value: 's', label: 'Segundo' }, { value: 'b', label: 'Ambos' }]} />
+              <div className="two">
+                <button type="button" className="btn ghost" onClick={() => setAdding(false)}>Cancelar</button>
+                <button type="submit" className="btn primary" disabled={!newName.trim()}>Guardar y elegir</button>
+              </div>
+            </motion.form>
+          ) : (
+            <>
+          {!typing && !isSuggested(meal) && (
             <Switch checked={suggest} onChange={(v) => { setSuggest(v); if (hasDishes(meal)) patch(v ? { suggested: true, suggested_by: parent } : { suggested: false }); }} label="💡 Solo sugerir" hint="La otra persona tiene que aceptarla" />
           )}
-          <div className="search-row">
-            <input className="field" type="search" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} placeholder={`Buscar ${course === 'p' ? 'primero' : 'segundo'} (${DISHES.length}+ platos)…`} enterKeyHint="search" />
-            <button type="button" className="round" aria-label="Ideas nuevas" title="Ideas nuevas" onClick={() => { buzz(); setSeed((s) => s + 1); }}>🎲</button>
-          </div>
-          <div className="cat-row">
-            <button type="button" className={!cat ? 'on' : ''} onClick={() => { setCat(''); setLimit(PAGE); }}>Todas</button>
-            {data.dishes.length > 0 && <button type="button" className={cat === 'mine' ? 'on' : ''} onClick={() => { setCat('mine'); setLimit(PAGE); }}>⭐ Mis platos</button>}
-            {CATEGORIES.map((c) => <button key={c.id} type="button" className={cat === c.id ? 'on' : ''} onClick={() => { setCat(c.id); setLimit(PAGE); }}>{c.emoji} {c.label}</button>)}
-          </div>
-
-          {!query && ideas.length > 0 && (
-            <>
-              <h3 className="label">💡 Ideas {used.size ? '(sin repetir lo de esta semana)' : ''}</h3>
-              <div className="chips no-top">
-                {ideas.map((d) => <button key={d.key} type="button" className="chip" onClick={() => pick(d)}>{d.emoji} {d.name}</button>)}
+              <div className="search-row">
+                <input ref={inputRef} className="field" type="search" value={query} onFocus={() => { setFocused(true); inputRef.current?.closest('.sheet-body')?.scrollTo({ top: 0 }); }} onBlur={() => setFocused(false)} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} placeholder={`Buscar ${course === 'p' ? 'primero' : 'segundo'} (${DISHES.length}+ platos)…`} enterKeyHint="search" />
+                {!typing && <button type="button" className="round" aria-label="Ideas nuevas" title="Ideas nuevas" onClick={() => { buzz(); setSeed((s) => s + 1); }}>🎲</button>}
+                {typing && <button type="button" className="round" aria-label="Cerrar teclado" onPointerDown={keep} onClick={() => { setQuery(''); inputRef.current?.blur(); }}>✕</button>}
               </div>
-            </>
-          )}
 
-          <h3 className="label">{results.length} {results.length === 1 ? 'plato' : 'platos'}</h3>
-          <div className="dish-grid">
-            {results.slice(0, limit).map((d) => (
-              <motion.button key={d.key} type="button" whileTap={{ scale: 0.93 }} className={`dish${current === d.name ? ' on' : ''}${used.has(d.key) ? ' used' : ''}`} onClick={() => pick(d)}>
-                <span className="d-emoji">{d.emoji}</span>
-                <span className="d-name">{d.name}</span>
-                {used.has(d.key) && <i className="d-used">ya esta semana</i>}
-                {d.custom && (
-                  <span role="button" aria-label={`Eliminar ${d.name}`} className="d-del" onClick={(e) => { e.stopPropagation(); remove('dishes', d); }}>×</span>
+              {!typing && (
+                <div className="cat-row">
+                  <button type="button" className={!cat ? 'on' : ''} onClick={() => { setCat(''); setLimit(PAGE); }}>Todas</button>
+                  {data.dishes.length > 0 && <button type="button" className={cat === 'mine' ? 'on' : ''} onClick={() => { setCat('mine'); setLimit(PAGE); }}>⭐ Mis platos</button>}
+                  {CATEGORIES.map((c) => <button key={c.id} type="button" className={cat === c.id ? 'on' : ''} onClick={() => { setCat(c.id); setLimit(PAGE); }}>{c.emoji} {c.label}</button>)}
+                </div>
+              )}
+
+              {!typing && ideas.length > 0 && (
+                <>
+                  <h3 className="label">💡 Ideas {used.size ? '(sin repetir lo de esta semana)' : ''}</h3>
+                  <div className="chips no-top">
+                    {ideas.map((d) => <button key={d.key} type="button" className="chip" onClick={() => pick(d)}>{d.emoji} {d.name}</button>)}
+                  </div>
+                </>
+              )}
+
+              {!typing && <h3 className="label">{results.length} {results.length === 1 ? 'plato' : 'platos'}</h3>}
+              <div className={`dish-grid${typing ? ' typing' : ''}`}>
+                {query.trim() && !exact && (
+                  <button type="button" className="dish add" onPointerDown={keep} onClick={startAdd}>
+                    <span className="d-emoji">＋</span><span className="d-name">Añadir «{query.trim()}»</span>
+                  </button>
                 )}
-              </motion.button>
-            ))}
-            {query.trim() && !exact && (
-              <button type="button" className={`dish add${adding ? ' on' : ''}`} onClick={() => setAdding((v) => !v)}>
-                <span className="d-emoji">＋</span><span className="d-name">Añadir «{query.trim()}»</span>
-              </button>
-            )}
-          </div>
-          {results.length > limit && <button type="button" className="btn ghost wide" onClick={() => setLimit((l) => l + PAGE)}>Mostrar más ({results.length - limit})</button>}
-          {results.length === 0 && !query.trim() && <p className="muted pad">Nada en esta categoría para {course === 'p' ? 'primero' : 'segundo'}.</p>}
-          {!allCourses && <button type="button" className="link" onClick={() => setAllCourses(true)}>Mostrar platos de todos los tipos</button>}
-
-          {adding && query.trim() && (
-            <motion.form className="add-dish" onSubmit={addDish} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-              <h3 className="label">Nuevo plato: {query.trim()}</h3>
-              <div className="emoji-row">
-                {DISH_EMOJIS.map((e) => <button key={e} type="button" className={e === emoji ? 'on' : ''} onClick={() => setEmoji(e)}>{e}</button>)}
+                {results.slice(0, limit).map((d) => (
+                  <motion.button key={d.key} type="button" whileTap={{ scale: 0.93 }} className={`dish${current === d.name ? ' on' : ''}${used.has(d.key) ? ' used' : ''}`} onPointerDown={keep} onClick={() => pick(d)}>
+                    <span className="d-emoji">{d.emoji}</span>
+                    <span className="d-name">{d.name}</span>
+                    {used.has(d.key) && <i className="d-used">ya esta semana</i>}
+                    {d.custom && !typing && (
+                      <span role="button" aria-label={`Eliminar ${d.name}`} className="d-del" onClick={(e) => { e.stopPropagation(); remove('dishes', d); }}>×</span>
+                    )}
+                  </motion.button>
+                ))}
               </div>
-              <Segmented name="newcourse" value={newCourse} onChange={setNewCourse} options={[{ value: 'p', label: 'Primero' }, { value: 's', label: 'Segundo' }, { value: 'b', label: 'Ambos' }]} />
-              <button type="submit" className="btn primary">Añadir y elegir</button>
-            </motion.form>
+              {results.length > limit && <button type="button" className="btn ghost wide" onPointerDown={keep} onClick={() => setLimit((l) => l + PAGE)}>Mostrar más ({results.length - limit})</button>}
+              {results.length === 0 && <p className="muted pad">No hay nada así para {course === 'p' ? 'primero' : 'segundo'}.</p>}
+              {!typing && <button type="button" className="btn ghost wide new-dish-btn" onClick={startAdd}>＋ Crear plato nuevo</button>}
+              {!typing && !allCourses && <button type="button" className="link" onClick={() => setAllCourses(true)}>Mostrar platos de todos los tipos</button>}
+            </>
           )}
         </>
       )}

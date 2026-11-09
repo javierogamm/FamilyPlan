@@ -171,7 +171,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* ---------- Hojas inferiores y formularios ---------- */
 .backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(30, 15, 5, .45); backdrop-filter: blur(3px); }
-.sheet { position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: 0; width: min(100%, 560px); max-height: 92dvh; display: flex; flex-direction: column; background: var(--bg); border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .25); }
+.sheet { position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: var(--vvb, 0px); width: min(100%, 560px); max-height: min(92dvh, calc(var(--vvh, 100vh) - 8px)); display: flex; flex-direction: column; background: var(--bg); border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .25); }
 .sheet-top { touch-action: none; padding: 8px 16px 0; cursor: grab; }
 .grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 8px; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 8px; }
@@ -502,3 +502,12 @@ input[type="date"].field, input[type="time"].field { appearance: none; -webkit-a
 
 .reset-btn { display: block; width: calc(100% - 24px); margin: 0 12px 10px; min-height: 40px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); font-weight: 700; font-size: 13.5px; }
 .reset-day { min-height: 40px; padding: 0 16px; margin: 0 0 10px; border-radius: 20px; background: color-mix(in srgb, #e5484d 12%, var(--card)); color: #e5484d; font-weight: 800; font-size: 13.5px; }
+
+/* ---------- Añadir platos en móvil ---------- */
+.courses.compact { margin-bottom: 6px; } .courses.compact .course { min-height: 46px; padding: 6px 26px 6px 10px; border-radius: 14px; } .courses.compact .course b { -webkit-line-clamp: 1; font-size: 14px; }
+.search-row { position: sticky; top: 0; z-index: 4; padding: 6px 0; background: var(--bg); }
+.dish-grid.typing { grid-template-columns: repeat(2, 1fr); } .dish-grid.typing .dish { min-height: 64px; flex-direction: row; justify-content: flex-start; gap: 8px; padding: 8px 12px; }
+.dish-grid.typing .d-name { text-align: left; font-size: 14px; }
+.icon-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; max-height: 190px; overflow-y: auto; padding: 4px; border-radius: 16px; background: var(--card); }
+.icon-pick button { height: 46px; font-size: 26px; border-radius: 12px; border: 2px solid transparent; } .icon-pick button.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--card)); }
+.new-dish-btn { margin-top: 10px; }

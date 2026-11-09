@@ -8,9 +8,24 @@ export default function Sheet({ open, onClose, title, children, footer }) {
   useEffect(() => {
     if (!open) return;
     document.body.style.overflow = 'hidden';
+    // Con el teclado abierto, la hoja se ajusta al área visible y queda justo encima del teclado
+    const vv = window.visualViewport;
+    const fit = () => {
+      if (!vv) return;
+      const root = document.documentElement.style;
+      root.setProperty('--vvh', `${vv.height}px`);
+      root.setProperty('--vvb', `${Math.max(0, window.innerHeight - (vv.offsetTop + vv.height))}px`);
+    };
+    fit();
+    vv?.addEventListener('resize', fit);
+    vv?.addEventListener('scroll', fit);
     const esc = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', esc);
     return () => {
+      vv?.removeEventListener('resize', fit);
+      vv?.removeEventListener('scroll', fit);
+      document.documentElement.style.removeProperty('--vvh');
+      document.documentElement.style.removeProperty('--vvb');
       document.body.style.overflow = '';
       window.removeEventListener('keydown', esc);
     };
